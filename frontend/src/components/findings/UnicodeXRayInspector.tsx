@@ -208,12 +208,12 @@ export const UnicodeXRayInspector: React.FC<UnicodeXRayInspectorProps> = ({
   const selectedChar = selectedCharIndex !== null ? analysis.characters[selectedCharIndex] : null;
 
   return (
-    <div className={`p-5 rounded-2xl bg-navy-850 border border-slate-800 space-y-4 font-sans text-xs`}>
+    <div className={`p-5 rounded-2xl bg-[#020713] border border-[#00FFA3]/20 space-y-4 font-sans text-xs`}>
       {showCardHeader && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/30">
+              <span className="p-1.5 rounded-lg bg-[#00FFA3]/10 text-[#00FFA3] border border-[#00FFA3]/30">
                 <Code2 className="w-4 h-4" />
               </span>
               <h3 className="text-xs font-bold uppercase tracking-wider text-white">
@@ -234,7 +234,7 @@ export const UnicodeXRayInspector: React.FC<UnicodeXRayInspectorProps> = ({
                 ? 'bg-red-500/15 text-red-300 border-red-500/30'
                 : analysis.riskSeverity === 'high'
                 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                : 'bg-[#00FFA3]/10 text-[#00FFA3] border-[#00FFA3]/30'
             }`}>
               Unicode Risk: {analysis.riskSeverity.toUpperCase()} ({analysis.riskScore}/100)
             </span>
@@ -249,7 +249,7 @@ export const UnicodeXRayInspector: React.FC<UnicodeXRayInspectorProps> = ({
           <span className="text-slate-500">Length: {analysis.characters.length} characters</span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 p-3 rounded-xl bg-navy-950 border border-slate-800">
+        <div className="flex flex-wrap items-center gap-1.5 p-3 rounded-xl bg-[#00050B] border border-[#00FFA3]/15 animate-in fade-in duration-300">
           {analysis.characters.map((ch, idx) => {
             const isSelected = selectedCharIndex === idx;
 
@@ -257,14 +257,14 @@ export const UnicodeXRayInspector: React.FC<UnicodeXRayInspectorProps> = ({
               <button
                 key={idx}
                 onClick={() => setSelectedCharIndex(idx)}
-                className={`flex flex-col items-center justify-center min-w-[38px] h-14 px-1.5 rounded-lg font-mono transition-all border ${
+                className={`flex flex-col items-center justify-center min-w-[38px] h-14 px-1.5 rounded-lg font-mono transition-all duration-300 border focus-visible:ring-2 focus-visible:ring-[#00FFA3] focus:outline-none ${
                   ch.isSuspicious
                     ? isSelected
-                      ? 'bg-red-500/30 border-red-400 text-red-200 ring-2 ring-red-500/40 shadow-lg'
-                      : 'bg-red-500/15 border-red-500/40 text-red-300 animate-pulse'
+                      ? 'bg-red-500/30 border-red-400 text-red-200 ring-2 ring-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.4)]'
+                      : 'bg-red-500/20 border-red-500/50 text-red-300 animate-unicode-glow'
                     : isSelected
-                    ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 ring-2 ring-cyan-500/40'
-                    : 'bg-navy-900 border-slate-700/80 text-slate-300 hover:border-slate-600'
+                    ? 'bg-[#00FFA3]/20 border-[#00FFA3] text-[#00FFA3] ring-2 ring-[#00FFA3]/40'
+                    : 'bg-[#020713] border-slate-800 text-slate-300 hover:border-[#00FFA3]/40'
                 }`}
                 title={`${ch.codePoint} - ${ch.scriptName} (${ch.description})`}
               >
@@ -275,7 +275,7 @@ export const UnicodeXRayInspector: React.FC<UnicodeXRayInspectorProps> = ({
                   {ch.codePoint.replace('U+', '')}
                 </span>
                 {ch.isSuspicious && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-0.5" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-0.5 shadow-[0_0_6px_rgba(239,68,68,0.8)]" />
                 )}
               </button>
             );
@@ -283,12 +283,12 @@ export const UnicodeXRayInspector: React.FC<UnicodeXRayInspectorProps> = ({
         </div>
       </div>
 
-      {/* Selected Character Deep Dive Card */}
+      {/* Selected Character Deep Dive Card (Code and explanation fade in smoothly) */}
       {selectedChar ? (
-        <div className="p-3.5 rounded-xl bg-navy-900 border border-slate-700/80 space-y-2 animate-in fade-in duration-150">
+        <div className="p-3.5 rounded-xl bg-[#00050B] border border-[#00FFA3]/20 space-y-2 section-smooth-enter">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xl font-black px-2 py-0.5 rounded bg-navy-950 border border-slate-700 text-white">
+              <span className="font-mono text-xl font-black px-2 py-0.5 rounded bg-[#020713] border border-slate-800 text-white">
                 {selectedChar.char}
               </span>
               <div>
@@ -296,7 +296,7 @@ export const UnicodeXRayInspector: React.FC<UnicodeXRayInspectorProps> = ({
                   {selectedChar.codePoint} (Decimal {selectedChar.decimalCode})
                 </span>
                 <p className="text-[11px] text-slate-400">
-                  Script Family: <strong className="text-cyan-300">{selectedChar.scriptName}</strong>
+                  Script Family: <strong className="text-[#00FFA3]">{selectedChar.scriptName}</strong>
                 </p>
               </div>
             </div>
@@ -306,27 +306,27 @@ export const UnicodeXRayInspector: React.FC<UnicodeXRayInspectorProps> = ({
                 {selectedChar.suspicionType}
               </span>
             ) : (
-              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#00FFA3]/10 text-[#00FFA3] border border-[#00FFA3]/30">
                 Normal ASCII
               </span>
             )}
           </div>
 
-          <p className="text-[11px] text-slate-300 leading-relaxed bg-navy-950/60 p-2 rounded-lg border border-slate-800">
+          <p className="text-[11px] text-slate-300 leading-relaxed bg-[#020713]/80 p-2 rounded-lg border border-slate-800">
             {selectedChar.description}
           </p>
 
           {selectedChar.asciiEquivalent && selectedChar.asciiEquivalent !== selectedChar.char && (
             <div className="flex items-center gap-2 text-[11px] text-slate-400">
-              <CornerDownRight className="w-3.5 h-3.5 text-cyan-400" />
+              <CornerDownRight className="w-3.5 h-3.5 text-[#00FFA3]" />
               <span>Safe ASCII Latin Equivalent: </span>
-              <strong className="text-emerald-400 font-mono text-xs">{selectedChar.asciiEquivalent}</strong>
+              <strong className="text-[#00FFA3] font-mono text-xs">{selectedChar.asciiEquivalent}</strong>
             </div>
           )}
         </div>
       ) : (
-        <div className="p-3 rounded-xl bg-navy-900/60 border border-slate-800 text-slate-400 text-[11px] flex items-center gap-2">
-          <HelpCircle className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+        <div className="p-3 rounded-xl bg-[#00050B] border border-slate-800 text-slate-400 text-[11px] flex items-center gap-2">
+          <HelpCircle className="w-3.5 h-3.5 text-[#00FFA3] flex-shrink-0" />
           <span>Click any character tile above to inspect its exact Unicode hex codepoint and homoglyph mapping.</span>
         </div>
       )}
@@ -336,7 +336,7 @@ export const UnicodeXRayInspector: React.FC<UnicodeXRayInspectorProps> = ({
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
             <span className="text-slate-400 text-[11px]">Normalized Safe String:</span>
-            <span className="font-mono text-emerald-400 font-bold bg-navy-950 px-2 py-0.5 rounded border border-emerald-500/30">
+            <span className="font-mono text-[#00FFA3] font-bold bg-[#00050B] px-2 py-0.5 rounded border border-[#00FFA3]/30">
               {analysis.safeAsciiString}
             </span>
           </div>
@@ -352,8 +352,8 @@ export const UnicodeXRayInspector: React.FC<UnicodeXRayInspectorProps> = ({
           >
             {copiedSafe ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-300">Copied Safe ASCII!</span>
+                <Check className="w-3.5 h-3.5 text-[#00FFA3]" />
+                <span className="text-[#00FFA3]">Copied Safe ASCII!</span>
               </>
             ) : (
               <>
@@ -366,9 +366,9 @@ export const UnicodeXRayInspector: React.FC<UnicodeXRayInspectorProps> = ({
           {onAddEvidence && (
             <button
               onClick={onAddEvidence}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#00FFA3] to-[#00E5FF] hover:opacity-90 text-black text-xs font-bold transition-opacity shadow-[0_0_12px_rgba(0, 255, 163,0.3)]"
             >
-              <FileCheck className="w-3.5 h-3.5" />
+              <FileCheck className="w-3.5 h-3.5 text-black" />
               <span>Add Evidence to Finding</span>
             </button>
           )}

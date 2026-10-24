@@ -20,8 +20,11 @@ import {
   Share2,
   Copy,
   Hash,
-  Send
+  Send,
+  Terminal,
+  Zap
 } from 'lucide-react';
+import { PlatformBadge, PlatformLogo } from '../common/PlatformBadge';
 import { ConfidenceBadge } from '../common/ConfidenceBadge';
 import { SignalScoreBarChart } from '../charts/SignalScoreBarChart';
 
@@ -35,6 +38,29 @@ export const StepByStepReportModal: React.FC<StepByStepReportModalProps> = ({ fi
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [noteText, setNoteText] = useState('');
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
+  const [isTransmitting, setIsTransmitting] = useState(false);
+  const [transmissionLogs, setTransmissionLogs] = useState<string[]>([]);
+  const [takedownTicket, setTakedownTicket] = useState<string | null>(null);
+
+  const handleTransmitTakedownPacket = () => {
+    if (!finding) return;
+    setIsTransmitting(true);
+    setTransmissionLogs(['[INITIALIZE] Packaging SHA-256 evidence payload...']);
+    setTimeout(() => {
+      setTransmissionLogs(prev => [...prev, '[CRYPTO] Signed with BrandGuard Ed25519 authority certificate']);
+    }, 350);
+    setTimeout(() => {
+      setTransmissionLogs(prev => [...prev, `[TRANSMIT] Dispatching abuse webhook to ${finding.platform} Abuse API...`]);
+    }, 750);
+    setTimeout(() => {
+      const ticketId = `TKD-${Math.floor(1000 + Math.random() * 9000)}-LIVE`;
+      setTakedownTicket(ticketId);
+      setTransmissionLogs(prev => [...prev, `[CONFIRMED] Ticket Issued: #${ticketId} (Remediation Queued)`]);
+      setIsTransmitting(false);
+      updateFindingStatus(finding.id, 'Confirmed fake', `Automated takedown dispatched. Ticket: ${ticketId}`);
+      showToast(`Automated Takedown dispatched! Ticket: ${ticketId}`, 'success');
+    }, 1300);
+  };
 
   if (!finding) return null;
 
@@ -109,9 +135,9 @@ export const StepByStepReportModal: React.FC<StepByStepReportModalProps> = ({ fi
                 Step {currentStep} of {totalSteps} &bull; <span className="text-white">{stepTitles[currentStep - 1]}</span>
               </span>
             </div>
-            <h2 id="report-modal-title" className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+            <h2 id="report-modal-title" className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2 flex-wrap">
               <span>{finding.title}</span>
-              <span className="text-xs font-mono font-normal text-cyan-400 bg-navy-950/80 px-2 py-0.5 rounded border border-slate-800">[{finding.platform}]</span>
+              <PlatformBadge platform={finding.platform} size="xs" />
             </h2>
           </div>
 
@@ -169,8 +195,8 @@ export const StepByStepReportModal: React.FC<StepByStepReportModalProps> = ({ fi
                     {finding.avatarInitials}
                   </div>
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-slate-400">{finding.platform}</span>
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <PlatformBadge platform={finding.platform} size="xs" />
                       <span className="text-slate-600">&bull;</span>
                       <span className="text-xs text-cyan-400 font-mono">{finding.usernameOrPackage}</span>
                     </div>
@@ -480,18 +506,18 @@ export const StepByStepReportModal: React.FC<StepByStepReportModalProps> = ({ fi
 
               {/* Connected Campaign Section (Section 14) */}
               {finding.connectedCampaign && (
-                <div className="unlumen-card p-4 bg-navy-850/80 border border-purple-500/30 space-y-2.5 shadow-sm">
+                <div className="unlumen-card p-4 bg-[#020713] border border-[#00FFA3]/30 space-y-2.5 shadow-sm">
                   <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-purple-400" />
+                    <Layers className="w-4 h-4 text-[#00FFA3]" />
                     <h4 className="text-xs font-bold text-white">Possible connected campaign</h4>
                   </div>
                   <p className="text-[11px] text-slate-300">
                     These findings share branding or infrastructure and may be related.
                   </p>
-                  <div className="bg-navy-950 p-3.5 rounded-xl border border-slate-800 text-xs space-y-2">
+                  <div className="bg-[#00050B] p-3.5 rounded-xl border border-slate-800 text-xs space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400">Campaign Name:</span>
-                      <span className="font-semibold text-purple-300">{finding.connectedCampaign.campaignName}</span>
+                      <span className="font-semibold text-[#00FFA3]">{finding.connectedCampaign.campaignName}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400">Suspicious Domain:</span>
@@ -520,7 +546,7 @@ export const StepByStepReportModal: React.FC<StepByStepReportModalProps> = ({ fi
               </div>
 
               {/* Action Buttons */}
-              <div className="unlumen-card p-5 bg-navy-850/80 border border-slate-800 space-y-4 shadow-md">
+              <div className="unlumen-card p-5 bg-[#020713] border border-slate-800 space-y-4 shadow-md">
                 <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
                   Select Action
                 </span>
@@ -542,8 +568,8 @@ export const StepByStepReportModal: React.FC<StepByStepReportModalProps> = ({ fi
                     onClick={() => handleStatusChange('Investigating')}
                     className={`btn-smooth p-3.5 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-2 transition-all ${
                       finding.status === 'Investigating'
-                        ? 'bg-purple-500/20 text-purple-300 border-purple-500/60 ring-2 ring-purple-500/40 shadow-lg shadow-purple-950/40'
-                        : 'bg-purple-500/10 text-purple-400 border-purple-500/25 hover:bg-purple-500/20'
+                        ? 'bg-[#00FFA3]/20 text-[#00FFA3] border-[#00FFA3]/60 ring-2 ring-[#00FFA3]/40 shadow-[0_0_15px_rgba(0, 255, 163,0.3)]'
+                        : 'bg-[#00FFA3]/10 text-[#00FFA3] border-[#00FFA3]/25 hover:bg-[#00FFA3]/20'
                     }`}
                   >
                     <Clock className="w-4.5 h-4.5" />
@@ -577,11 +603,71 @@ export const StepByStepReportModal: React.FC<StepByStepReportModalProps> = ({ fi
 
                 {/* Final reminder required by Section 12 */}
                 <div className="p-3.5 rounded-xl bg-navy-950 border border-slate-800 text-xs text-slate-400 flex items-center gap-2.5 shadow-inner">
-                  <Info className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <Info className="w-4 h-4 text-[#00FFA3] shrink-0" />
                   <span>
                     This score supports review. It is not proof that the profile or app is fake.
                   </span>
                 </div>
+              </div>
+
+              {/* Automated Takedown Gateway & Registrar Webhook Simulator */}
+              <div className="unlumen-card p-5 bg-[#040C1D] border border-[#00FFA3]/30 rounded-xl space-y-4 shadow-[0_0_20px_rgba(0,255,163,0.15)] relative overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Zap className="w-4 h-4 text-[#00FFA3] animate-pulse" />
+                      <span className="text-xs font-mono font-bold text-[#00FFA3] uppercase tracking-wider">
+                        Automated Takedown Gateway &amp; Registrar Webhook
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      Dispatches signed cryptographic evidence dossier to Cloudflare Abuse API, Google Safe Browsing, and platform registrar.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleTransmitTakedownPacket}
+                    disabled={isTransmitting}
+                    className="btn-smooth px-4 py-2.5 rounded-xl bg-[#00FFA3] hover:bg-[#00E88F] text-[#00050B] font-mono font-bold text-xs flex items-center gap-2 transition-all disabled:opacity-50 shadow-[0_0_15px_rgba(0,255,163,0.35)] shrink-0"
+                  >
+                    {isTransmitting ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-[#00050B] border-t-transparent rounded-full animate-spin" />
+                        <span>TRANSMITTING...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        <span>TRANSMIT ABUSE PACKET</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Live Transmission Terminal */}
+                {(transmissionLogs.length > 0 || takedownTicket) && (
+                  <div className="p-3.5 rounded-xl bg-[#00050B] border border-[#00FFA3]/20 space-y-2">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pb-1 border-b border-slate-800">
+                      <div className="flex items-center gap-1.5 text-[#00FFA3]">
+                        <Terminal className="w-3.5 h-3.5" />
+                        <span>ABUSE_API_GATEWAY // DISPATCH TELEMETRY</span>
+                      </div>
+                      {takedownTicket && (
+                        <span className="px-2 py-0.5 rounded bg-[#00FFA3]/20 text-[#00FFA3] border border-[#00FFA3]/40 font-bold">
+                          TICKET: #{takedownTicket}
+                        </span>
+                      )}
+                    </div>
+                    <div className="font-mono text-[11px] space-y-1 text-slate-300 max-h-28 overflow-y-auto">
+                      {transmissionLogs.map((log, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <span className="text-[#00FFA3] select-none">&gt;</span>
+                          <span className={log.includes('[CONFIRMED]') ? 'text-[#00FFA3] font-bold' : ''}>{log}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Add Note Section */}

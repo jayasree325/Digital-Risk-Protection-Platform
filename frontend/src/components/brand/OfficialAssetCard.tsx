@@ -2,6 +2,7 @@ import React from 'react';
 import { OfficialSocialAccount, OfficialMobileApp } from '../../types';
 import { ShieldCheck, ExternalLink, Edit3, Trash2, Smartphone, Share2 } from 'lucide-react';
 import { SpotlightCard } from '../common/SpotlightCard';
+import { PlatformBadge } from '../common/PlatformBadge';
 
 interface SocialAssetCardProps {
   type: 'social';
@@ -27,11 +28,8 @@ export const OfficialAssetCard: React.FC<OfficialAssetCardProps> = (props) => {
       >
         <div>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-white flex items-center gap-1.5 font-mono">
-              <Share2 className="w-3.5 h-3.5 text-cyan-400" />
-              {asset.platform}
-            </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+            <PlatformBadge platform={asset.platform} size="xs" />
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-[#00FFA3]/15 text-[#00FFA3] border border-[#00FFA3]/30 shadow-[0_0_12px_rgba(0,255,163,0.3)]">
               <ShieldCheck className="w-3 h-3" />
               VERIFIED
             </span>
@@ -90,11 +88,11 @@ export const OfficialAssetCard: React.FC<OfficialAssetCardProps> = (props) => {
     >
       <div>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-bold text-white flex items-center gap-1.5 font-mono">
-            <Smartphone className="w-3.5 h-3.5 text-amber-400" />
-            {asset.name}
-          </span>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+          <div className="flex items-center gap-2">
+            <PlatformBadge platform={asset.platform} size="xs" />
+            <span className="text-xs font-bold text-white font-mono truncate max-w-[150px]">{asset.name}</span>
+          </div>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-[#00FFA3]/15 text-[#00FFA3] border border-[#00FFA3]/30 shadow-[0_0_12px_rgba(0,255,163,0.3)]">
             <ShieldCheck className="w-3 h-3" />
             VERIFIED
           </span>

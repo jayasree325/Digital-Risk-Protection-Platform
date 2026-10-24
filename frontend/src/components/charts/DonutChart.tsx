@@ -25,7 +25,8 @@ export const DonutChart: React.FC<DonutChartProps> = ({ title, total, segments, 
   let cumulativeOffset = 0;
 
   return (
-    <div className="p-4 rounded-xl bg-[#0D1425] border border-[#24324D] hover:border-[#8050FF]/40 transition-colors flex flex-col justify-between">
+    <div className="p-4.5 rounded-2xl bg-[#0C142E]/70 backdrop-blur-2xl border border-white/[0.08] hover:border-[#00FFA3]/40 transition-all flex flex-col justify-between shadow-glass relative overflow-hidden group">
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#00FFA3]/30 to-transparent pointer-events-none" />
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-xs font-bold text-white tracking-tight">{title}</h4>
         <span className="text-[10px] text-slate-400 font-mono">{total} Active</span>

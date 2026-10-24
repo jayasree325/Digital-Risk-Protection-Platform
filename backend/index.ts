@@ -23,6 +23,7 @@ import linkCheckRoutes from './routes/linkCheckRoutes';
 import findingRoutes from './routes/findingRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import scanRoutes from './routes/scanRoutes';
+import aiRoutes from './routes/aiRoutes';
 import { authMiddleware, AuthenticatedRequest } from './auth';
 
 const app = express();
@@ -47,6 +48,7 @@ app.use('/api/link-checks', linkCheckRoutes);
 app.use('/api/findings', findingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/scans', scanRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Specialized endpoints from Section 17:
 // GET /api/social/findings
@@ -140,8 +142,11 @@ app.get('/api', (_req, res) => {
         severity: 'GET /api/dashboard/severity',
       },
       scans: {
-        status: 'GET /api/scans/instagram/status',
+        instagramStatus: 'GET /api/scans/instagram/status',
         runSocialScan: 'POST /api/scans/social',
+        runAppScan: 'POST /api/scans/apps',
+        googleStatus: 'GET /api/scans/google/status',
+        runGoogleDiscovery: 'POST /api/scans/google',
       },
     },
   });

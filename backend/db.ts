@@ -456,6 +456,7 @@ function seedInitialData(db: Database) {
 }
 
 function ensureSchemaAndFixtures(db: Database) {
+  const now = new Date().toISOString();
   // 1. Column migrations
   try {
     db.run('ALTER TABLE findings ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 1');
@@ -463,7 +464,33 @@ function ensureSchemaAndFixtures(db: Database) {
     // Column already exists
   }
 
-  const now = new Date().toISOString();
+  try { db.run('ALTER TABLE link_checks ADD COLUMN is_true_brand INTEGER DEFAULT 0'); } catch {}
+  try { db.run('ALTER TABLE link_checks ADD COLUMN verdict_boolean TEXT DEFAULT "FALSE"'); } catch {}
+  try { db.run('ALTER TABLE link_checks ADD COLUMN detected_brand TEXT'); } catch {}
+  try { db.run('ALTER TABLE link_checks ADD COLUMN threat_classification TEXT'); } catch {}
+  try { db.run('ALTER TABLE link_checks ADD COLUMN web_risk_status TEXT'); } catch {}
+
+  // 1.1 Ensure default demo user Alex Mercer (AcmePay) exists
+  let hasAlex = false;
+  try {
+    const s = db.prepare("SELECT id FROM users WHERE email = 'alex.mercer@acmepay.com'");
+    if (s.step()) hasAlex = true;
+    s.free();
+  } catch {}
+
+  if (!hasAlex) {
+    const passwordHash = bcrypt.hashSync('password123', 10);
+    db.run(
+      `INSERT OR IGNORE INTO companies (id, name, website, industry, email_domain, setup_status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ['comp-acmepay', 'AcmePay Technologies', 'https://acmepay.com', 'Financial Technology & Payments', 'acmepay.com', 'active', now]
+    );
+    db.run(
+      `INSERT OR REPLACE INTO users (id, name, email, password_hash, company_id, role, created_at, last_login, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ['user-alex', 'Alex Mercer', 'alex.mercer@acmepay.com', passwordHash, 'comp-acmepay', 'SecOps Lead', now, now, 'active']
+    );
+  }
 
   // 2. Ensure Nike exists
   let hasNike = false;

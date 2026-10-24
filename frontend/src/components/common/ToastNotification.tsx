@@ -11,10 +11,10 @@ export const ToastNotification: React.FC = () => {
     <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
       {toasts.map((toast) => {
         const iconConfig = {
-          success: { icon: CheckCircle2, border: 'border-emerald-500/40', text: 'text-emerald-400', bg: 'bg-navy-850/95' },
-          warning: { icon: AlertTriangle, border: 'border-amber-500/40', text: 'text-amber-400', bg: 'bg-navy-850/95' },
-          error: { icon: AlertCircle, border: 'border-red-500/40', text: 'text-red-400', bg: 'bg-navy-850/95' },
-          info: { icon: Info, border: 'border-cyan-500/40', text: 'text-cyan-400', bg: 'bg-navy-850/95' },
+          success: { icon: CheckCircle2, border: 'border-[#00FFA3]/50 shadow-[0_0_12px_rgba(0,255,163,0.3)]', text: 'text-[#00FFA3]', bg: 'bg-[#00050B]/95' },
+          warning: { icon: AlertTriangle, border: 'border-amber-500/40', text: 'text-amber-400', bg: 'bg-[#00050B]/95' },
+          error: { icon: AlertCircle, border: 'border-red-500/40', text: 'text-red-400', bg: 'bg-[#00050B]/95' },
+          info: { icon: Info, border: 'border-[#00E5FF]/50', text: 'text-[#00E5FF]', bg: 'bg-[#00050B]/95' },
         }[toast.type];
 
         const IconComponent = iconConfig.icon;

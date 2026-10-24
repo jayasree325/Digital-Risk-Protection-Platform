@@ -1,32 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useBrandGuard } from '../../context/BrandGuardContext';
 import { PageId } from '../../types';
 import { 
   ShieldCheck, 
-  LayoutDashboard, 
-  Link2,
-  Building2, 
-  Share2, 
-  Smartphone, 
+  Home, 
+  Radar, 
   ShieldAlert, 
+  Link2, 
+  Building2, 
+  Shield, 
+  FileSearch, 
+  Code2, 
+  Megaphone, 
+  FileText, 
+  Bell, 
   Settings, 
+  LogOut, 
   ChevronLeft, 
-  ChevronRight,
-  Sparkles,
+  ChevronRight, 
   RotateCcw,
-  Home,
-  LogOut,
-  Wrench,
-  FileText,
-  ChevronDown,
-  ChevronUp,
-  Code2,
-  Megaphone,
-  FileSearch,
-  Bell,
-  Eye,
-  Radio,
-  Radar
+  Volume2,
+  VolumeX,
+  HelpCircle,
+  Activity,
+  LogIn
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -37,289 +34,225 @@ export const Sidebar: React.FC = () => {
     isSidebarCollapsed, 
     toggleSidebar,
     resetDemoData,
-    brandProfile,
     setViewMode,
     logout,
     company,
-    isDemoMode
+    isDemoMode,
+    isAuthenticated,
+    openAuthModal,
   } = useBrandGuard();
 
-  const [isToolsOpen, setIsToolsOpen] = React.useState(true);
-  const [isReportsOpen, setIsReportsOpen] = React.useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
-  const mainNavItems = [
-    { id: 'home' as PageId, label: 'Home', icon: Home },
-    { 
-      id: 'scan-results' as PageId, 
-      label: 'Scan Results', 
-      icon: Radar, 
-      badge: 'Staged', 
-      badgeColor: 'bg-[#8050FF]/20 text-[#A17AFF] border-[#8050FF]/40' 
-    },
+  // Video 1 Navigation Dock Items
+  const navItems = [
+    { id: 'home' as PageId, label: 'Command Center', icon: Home, badge: undefined },
     { 
       id: 'findings' as PageId, 
-      label: 'Findings', 
+      label: 'Active Threats', 
       icon: ShieldAlert, 
-      badge: counts.open, 
-      badgeColor: 'bg-[#FF5878]/15 text-[#FF5878] border-[#FF5878]/30' 
+      badge: counts.open || 2, 
+      badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30' 
     },
-    { id: 'check-link' as PageId, label: 'Check a Link', icon: Link2 },
     { 
-      id: 'brand-profile' as PageId, 
-      label: 'Brand Profile', 
-      icon: Building2, 
-      badge: `${brandProfile.completenessPercent}%`, 
-      badgeColor: 'bg-[#43D9B0]/15 text-[#43D9B0] border-[#43D9B0]/30' 
+      id: 'scan-results' as PageId, 
+      label: 'Telemetry Radar', 
+      icon: Radar, 
+      badge: 'LIVE', 
+      badgeColor: 'bg-[#00FFA3]/15 text-[#00FFA3] border-[#00FFA3]/30' 
     },
-  ];
-
-  const toolsItems = [
-    { id: 'watchlist' as PageId, label: 'Pre-emptive Watchlist', icon: ShieldCheck },
-    { id: 'scam-analyzer' as PageId, label: 'Scam Script Analyzer', icon: FileSearch },
-    { id: 'unicode-xray' as PageId, label: 'Unicode X-ray', icon: Code2 },
-    { id: 'warning-kit' as PageId, label: 'Customer Warning Kit', icon: Megaphone },
-  ];
-
-  const reportsItems = [
-    { id: 'board-report' as PageId, label: 'Board Report', icon: FileText },
-    { id: 'alert-preview' as PageId, label: 'Alert Preview', icon: Bell },
+    { id: 'check-link' as PageId, label: 'Check Suspicious Link', icon: Link2, badge: undefined },
+    { id: 'brand-profile' as PageId, label: 'Asset Perimeter', icon: Building2, badge: undefined },
+    { id: 'watchlist' as PageId, label: 'Pre-emptive Watchlist', icon: Shield, badge: undefined },
+    { id: 'scam-analyzer' as PageId, label: 'Scam Script Analyzer', icon: FileSearch, badge: undefined },
+    { id: 'unicode-xray' as PageId, label: 'Unicode X-Ray', icon: Code2, badge: undefined },
+    { id: 'board-report' as PageId, label: 'Board Intelligence', icon: FileText, badge: undefined },
+    { id: 'alert-preview' as PageId, label: 'Alert Notification Kit', icon: Bell, badge: undefined },
   ];
 
   return (
     <aside 
-      className={`relative flex flex-col h-screen bg-[#070A14] border-r border-[#24324D] transition-all duration-300 z-30 select-none ${
-        isSidebarCollapsed ? 'w-20' : 'w-64'
+      className={`relative flex flex-col h-screen bg-[#00050B] border-r border-cyan-950/80 shadow-[4px_0_35px_rgba(0,0,0,0.9)] transition-all duration-300 z-30 select-none ${
+        isSidebarCollapsed ? 'w-[72px]' : 'w-64'
       }`}
     >
-      {/* Brand header */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-[#24324D] bg-[#0A1020]/80 backdrop-blur-md">
+      {/* 1. Brand Header (Video 2 icon emblem) */}
+      <div className="h-16 flex items-center justify-between px-3.5 border-b border-cyan-950/80 bg-[#00050B] relative">
         <div 
           onClick={() => setViewMode('landing')}
           className="flex items-center gap-3 overflow-hidden cursor-pointer group"
-          title="Return to AEGIS landing page"
+          title="Return to BrandGuard landing page"
         >
-          <div className="p-2 rounded-xl bg-gradient-to-br from-[#8050FF]/25 to-[#42DDF5]/15 border border-[#8050FF]/50 text-[#A17AFF] shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform">
-            <ShieldCheck className="w-5 h-5 text-[#42DDF5]" />
+          {/* Glowing Cyan Hexagonal Shield Emblem */}
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00FFA3]/20 via-[#00E88F]/10 to-[#00050B] border border-[#00FFA3]/40 text-[#00FFA3] shadow-[0_0_15px_rgba(0, 255, 163,0.25)] flex items-center justify-center flex-shrink-0 group-hover:scale-105 group-hover:border-[#00FFA3] transition-all">
+            <ShieldCheck className="w-5 h-5 text-[#00FFA3]" />
           </div>
+
           {!isSidebarCollapsed && (
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-display-3d text-lg font-black text-white tracking-tight truncate group-hover:text-[#A17AFF] transition-colors">
-                  AEGIS
+                <span className="font-extrabold text-base tracking-tight text-white font-sans">
+                  Cyvanta
                 </span>
-                <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider rounded bg-[#8050FF]/15 text-[#A17AFF] border border-[#8050FF]/30">
-                  SecOps
+                <span className="px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase rounded bg-[#00FFA3]/15 text-[#00FFA3] border border-[#00FFA3]/30">
+                  PRO
                 </span>
               </div>
-              <span className="text-[10px] font-mono text-[#A6B3CD] truncate tracking-wide">
-                Digital Risk Protection
+              <span className="text-[10px] font-mono text-slate-400 truncate tracking-wider">
+                COMMAND CENTER
               </span>
             </div>
           )}
         </div>
 
-        {/* Collapse toggle */}
+        {/* Sidebar Collapse Toggle */}
         <button
           onClick={toggleSidebar}
-          className="p-1.5 rounded-lg text-[#A6B3CD] hover:text-white hover:bg-[#111B30] transition-all btn-smooth"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.05] transition-all"
           title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {isSidebarCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronLeft className="w-4 h-4" />
-          )}
+          {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
       </div>
 
-      {/* Active Selected Company badge */}
-      {!isSidebarCollapsed && company && (
-        <div className="px-3 pt-3 pb-1">
-          <div className="px-3 py-2 rounded-xl bg-[#0D1425] border border-[#24324D] flex items-center justify-between shadow-inner backdrop-blur-sm">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#8050FF]/20 to-[#42DDF5]/20 text-[#A17AFF] border border-[#8050FF]/40 flex items-center justify-center font-black text-[10px] flex-shrink-0">
-                {company.name.slice(0, 2).toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold text-white truncate leading-tight">
-                  {company.name}
-                </p>
-                <p className="text-[9px] text-[#A6B3CD] font-mono truncate">
-                  {company.website || 'Protected Brand'}
-                </p>
-              </div>
-            </div>
-            {isDemoMode && (
-              <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#FFBD69]/15 text-[#FFBD69] border border-[#FFBD69]/30 uppercase tracking-wider">
-                SIM
-              </span>
-            )}
-          </div>
-        </div>
-      )}
+      {/* 2. Navigation Items (Video 2 sleek vertical icon dock) */}
+      <nav className="flex-1 py-4 px-2.5 space-y-2 overflow-y-auto overflow-x-hidden">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activePage === item.id || (item.id === 'findings' && (activePage === 'social' || activePage === 'apps'));
 
-      {/* Navigation Links */}
-      <nav className="flex-1 py-4 px-3 space-y-3.5 overflow-y-auto">
-        {/* Core items */}
-        <div className="space-y-1">
-          {mainNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activePage === item.id || (item.id === 'findings' && (activePage === 'social' || activePage === 'apps'));
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActivePage(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all duration-200 btn-smooth ${
-                  isActive
-                    ? 'bg-gradient-to-r from-[#8050FF]/25 to-[#42DDF5]/15 text-white border border-[#8050FF]/50 shadow-sm shadow-[#8050FF]/20 font-semibold'
-                    : 'text-[#A6B3CD] hover:text-white hover:bg-[#111B30] border border-transparent'
-                } ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}
-                title={isSidebarCollapsed ? item.label : undefined}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${isActive ? 'text-[#42DDF5]' : 'text-[#A6B3CD]'}`} />
-                  {!isSidebarCollapsed && (
-                    <span className="truncate">{item.label}</span>
-                  )}
-                </div>
-
-                {!isSidebarCollapsed && item.badge !== undefined && (
-                  <span className={`px-2 py-0.5 text-[10px] font-mono rounded-full border ${item.badgeColor || 'bg-[#111B30] text-[#A6B3CD]'}`}>
-                    {item.badge}
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActivePage(item.id)}
+              className={`w-full flex items-center gap-3 rounded-2xl text-xs transition-all duration-200 relative group ${
+                isSidebarCollapsed ? 'p-2.5 justify-center' : 'px-3 py-2.5 justify-between'
+              } ${
+                isActive
+                  ? 'bg-[#040C1D] text-white border border-[#00FFA3]/40 shadow-[0_0_18px_rgba(0, 255, 163,0.18)] font-semibold'
+                  : 'text-slate-400 hover:text-white hover:bg-[#040C1D]/50 border border-transparent'
+              }`}
+              title={isSidebarCollapsed ? item.label : undefined}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <Icon
+                  className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${
+                    isActive
+                      ? 'text-[#00FFA3] drop-shadow-[0_0_8px_rgba(0, 255, 163,0.8)]'
+                      : 'text-slate-400 group-hover:text-[#00FFA3]'
+                  }`}
+                />
+                {!isSidebarCollapsed && (
+                  <span className="truncate text-left text-xs font-medium font-sans">
+                    {item.label}
                   </span>
                 )}
-              </button>
-            );
-          })}
-        </div>
+              </div>
 
-        {/* Tools Group */}
-        <div className="space-y-1">
-          {!isSidebarCollapsed && (
-            <button
-              onClick={() => setIsToolsOpen(!isToolsOpen)}
-              className="w-full flex items-center justify-between px-3 py-1 text-[10px] font-mono uppercase font-bold text-[#A6B3CD] tracking-wider hover:text-[#A17AFF] transition-colors"
-            >
-              <span className="flex items-center gap-1.5">
-                <Wrench className="w-3 h-3 text-[#A17AFF]" />
-                <span>Forensics</span>
-              </span>
-              {isToolsOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              {/* Badges */}
+              {!isSidebarCollapsed && item.badge !== undefined && (
+                <span className={`px-2 py-0.5 text-[9px] font-mono font-bold rounded-full border ${item.badgeColor}`}>
+                  {item.badge}
+                </span>
+              )}
+
+              {/* Tooltip on collapsed hover */}
+              {isSidebarCollapsed && (
+                <div className="absolute left-full ml-3 px-2.5 py-1 rounded-lg bg-[#040C1D] border border-[#00FFA3]/30 text-white text-xs font-mono shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
+                  {item.label}
+                  {item.badge && <span className="ml-2 text-[#00FFA3]">({item.badge})</span>}
+                </div>
+              )}
             </button>
-          )}
-
-          {(isToolsOpen || isSidebarCollapsed) && (
-            <div className="space-y-1">
-              {toolsItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activePage === item.id;
-
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActivePage(item.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs transition-all duration-200 btn-smooth ${
-                      isActive
-                        ? 'bg-[#8050FF]/20 text-[#A17AFF] border border-[#8050FF]/40 font-semibold shadow-sm'
-                        : 'text-[#A6B3CD] hover:text-white hover:bg-[#111B30] border border-transparent'
-                    } ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
-                    title={isSidebarCollapsed ? item.label : undefined}
-                  >
-                    <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-[#A17AFF]' : 'text-[#A6B3CD]'}`} />
-                    {!isSidebarCollapsed && (
-                      <span className="truncate text-[11px]">{item.label}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Reports Group */}
-        <div className="space-y-1">
-          {!isSidebarCollapsed && (
-            <button
-              onClick={() => setIsReportsOpen(!isReportsOpen)}
-              className="w-full flex items-center justify-between px-3 py-1 text-[10px] font-mono uppercase font-bold text-slate-400 tracking-wider hover:text-cyan-300 transition-colors"
-            >
-              <span className="flex items-center gap-1.5">
-                <FileText className="w-3 h-3 text-cyan-400" />
-                <span>Intelligence</span>
-              </span>
-              {isReportsOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            </button>
-          )}
-
-          {(isReportsOpen || isSidebarCollapsed) && (
-            <div className="space-y-1">
-              {reportsItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activePage === item.id;
-
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActivePage(item.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs transition-all duration-200 btn-smooth ${
-                      isActive
-                        ? 'bg-[#8050FF]/20 text-[#A17AFF] border border-[#8050FF]/40 font-semibold shadow-sm'
-                        : 'text-[#A6B3CD] hover:text-white hover:bg-[#111B30] border border-transparent'
-                    } ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
-                    title={isSidebarCollapsed ? item.label : undefined}
-                  >
-                    <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-[#42DDF5]' : 'text-[#A6B3CD]'}`} />
-                    {!isSidebarCollapsed && (
-                      <span className="truncate text-[11px]">{item.label}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+          );
+        })}
       </nav>
 
-      {/* Footer controls: Settings, Reset Demo, Sign out */}
-      <div className="p-3 border-t border-[#24324D] bg-[#0A1020]/80 space-y-1">
+      {/* 3. Bottom Footer Controls (Settings, Sound, Logout) */}
+      <div className="p-2.5 border-t border-cyan-950/80 bg-[#00050B] space-y-1">
+        {/* Sound Toggle */}
         <button
-          onClick={() => setActivePage('settings')}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs transition-colors btn-smooth ${
-            activePage === 'settings'
-              ? 'bg-[#8050FF]/20 text-[#A17AFF] border border-[#8050FF]/30 font-semibold'
-              : 'text-[#A6B3CD] hover:text-white hover:bg-[#111B30]'
-          } ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}
-          title={isSidebarCollapsed ? 'Settings' : undefined}
+          onClick={() => setSoundEnabled(!soundEnabled)}
+          className={`w-full flex items-center gap-3 rounded-xl text-xs text-slate-400 hover:text-white hover:bg-[#040C1D]/60 transition-colors ${
+            isSidebarCollapsed ? 'p-2.5 justify-center' : 'px-3 py-2 justify-start'
+          }`}
+          title={soundEnabled ? 'Mute Audio Telemetry' : 'Enable Audio Telemetry'}
         >
-          <Settings className="w-4 h-4 flex-shrink-0" />
-          {!isSidebarCollapsed && <span>Settings</span>}
+          {soundEnabled ? (
+            <Volume2 className="w-4 h-4 text-[#00FFA3] flex-shrink-0" />
+          ) : (
+            <VolumeX className="w-4 h-4 text-slate-500 flex-shrink-0" />
+          )}
+          {!isSidebarCollapsed && <span className="text-[11px] font-sans">Audio FX</span>}
         </button>
 
+        {/* Settings */}
+        <button
+          onClick={() => setActivePage('settings')}
+          className={`w-full flex items-center gap-3 rounded-xl text-xs transition-colors ${
+            isSidebarCollapsed ? 'p-2.5 justify-center' : 'px-3 py-2 justify-start'
+          } ${
+            activePage === 'settings'
+              ? 'bg-[#040C1D] text-[#00FFA3] border border-[#00FFA3]/30 font-bold'
+              : 'text-slate-400 hover:text-white hover:bg-[#040C1D]/60'
+          }`}
+          title="System Settings"
+        >
+          <Settings className="w-4 h-4 flex-shrink-0" />
+          {!isSidebarCollapsed && <span className="text-[11px] font-sans">Settings</span>}
+        </button>
+
+        {/* Reset Demo State (if in demo mode) */}
         {isDemoMode && (
           <button
             onClick={resetDemoData}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#FFBD69] hover:text-white hover:bg-[#FFBD69]/10 transition-colors btn-smooth ${
-              isSidebarCollapsed ? 'justify-center' : 'justify-start'
+            className={`w-full flex items-center gap-3 rounded-xl text-xs text-amber-400 hover:text-amber-200 hover:bg-amber-500/10 transition-colors ${
+              isSidebarCollapsed ? 'p-2.5 justify-center' : 'px-3 py-2 justify-start'
             }`}
-            title={isSidebarCollapsed ? 'Reset Demo Data' : undefined}
+            title="Reset Simulated Threat Stream"
           >
-            <RotateCcw className="w-4 h-4 flex-shrink-0 text-[#FFBD69]" />
-            {!isSidebarCollapsed && <span className="font-mono text-[11px]">Reset Demo State</span>}
+            <RotateCcw className="w-4 h-4 flex-shrink-0 text-amber-400" />
+            {!isSidebarCollapsed && <span className="font-mono text-[10px]">Reset Stream</span>}
           </button>
         )}
 
-        <button
-          onClick={logout}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-[#A6B3CD] hover:text-[#FF5878] hover:bg-[#FF5878]/10 transition-colors btn-smooth ${
-            isSidebarCollapsed ? 'justify-center' : 'justify-start'
-          }`}
-          title={isSidebarCollapsed ? 'Sign out' : undefined}
-        >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
-          {!isSidebarCollapsed && <span>Sign out</span>}
-        </button>
+        {/* Sign In / Register (for Guests) or Logout (for Authed Users) */}
+        {!isAuthenticated ? (
+          <>
+            <button
+              onClick={() => openAuthModal('Session Authentication', 'Sign in or register your company to unlock automated takedowns and custom scans.')}
+              className={`w-full flex items-center gap-3 rounded-xl text-xs font-bold text-[#00FFA3] hover:text-[#00E5FF] hover:bg-[#00FFA3]/10 transition-colors ${
+                isSidebarCollapsed ? 'p-2.5 justify-center' : 'px-3 py-2 justify-start'
+              }`}
+              title="Sign In / Register"
+            >
+              <LogIn className="w-4 h-4 flex-shrink-0 text-[#00FFA3]" />
+              {!isSidebarCollapsed && <span className="text-[11px] font-sans">Sign In</span>}
+            </button>
+
+            <button
+              onClick={() => setViewMode('landing')}
+              className={`w-full flex items-center gap-3 rounded-xl text-xs text-slate-400 hover:text-white hover:bg-[#040C1D]/60 transition-colors ${
+                isSidebarCollapsed ? 'p-2.5 justify-center' : 'px-3 py-2 justify-start'
+              }`}
+              title="Back to Landing Page"
+            >
+              <LogOut className="w-4 h-4 flex-shrink-0" />
+              {!isSidebarCollapsed && <span className="text-[11px] font-sans">Exit to Home</span>}
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={logout}
+            className={`w-full flex items-center gap-3 rounded-xl text-xs text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors ${
+              isSidebarCollapsed ? 'p-2.5 justify-center' : 'px-3 py-2 justify-start'
+            }`}
+            title="Sign Out"
+          >
+            <LogOut className="w-4 h-4 flex-shrink-0" />
+            {!isSidebarCollapsed && <span className="text-[11px] font-sans">Exit SOC</span>}
+          </button>
+        )}
       </div>
     </aside>
   );

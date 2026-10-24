@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useBrandGuard } from '../context/BrandGuardContext';
 import { LinkCheckRecord } from '../types';
 import { SpotlightCard } from '../components/common/SpotlightCard';
+import { SourceStatusBadge } from '../components/common/SourceStatusBadge';
+import { RiskBadge } from '../components/common/RiskBadge';
+import { ConfidenceBadge } from '../components/common/ConfidenceBadge';
 import { 
   Link2, 
   Search, 
@@ -33,17 +36,32 @@ export const CheckLinkPage: React.FC = () => {
   const [activeResult, setActiveResult] = useState<LinkCheckRecord | null>(null);
 
   const brandSlug = (brandProfile.brandName || 'brand').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const exampleUrls = [
-    `https://${brandSlug}-help-resolution.xyz/login?ref=support`,
-    `https://${brandSlug}y-direct.com/auth/verify`,
-    brandProfile.website || `https://${brandSlug}.com/merchants`,
+
+  // Diverse multi-brand quick testing samples covering genuine (TRUE) vs deceptive (FALSE) links
+  const multiBrandExamples = [
+    { label: 'PayPal (True)', url: 'https://www.paypal.com/signin', isTrue: true },
+    { label: 'PayPal (False Phish)', url: 'https://paypal-security-center.xyz/login', isTrue: false },
+    { label: 'Apple (True)', url: 'https://appleid.apple.com', isTrue: true },
+    { label: 'Apple (False Spoof)', url: 'https://appleid-verify-alert.top/auth', isTrue: false },
+    { label: 'Google (True)', url: 'https://accounts.google.com', isTrue: true },
+    { label: 'Google (False Phish)', url: 'https://accounts-google.security-login.xyz', isTrue: false },
+    { label: 'Netflix (True)', url: 'https://www.netflix.com/login', isTrue: true },
+    { label: 'Netflix (False Phish)', url: 'https://netflix-billing-update.info/reactivate', isTrue: false },
+    { label: 'Chase Bank (True)', url: 'https://www.chase.com', isTrue: true },
+    { label: 'Chase (False Phish)', url: 'https://chase-online-login.net/verify', isTrue: false },
+    { label: `${brandProfile.brandName || 'AcmePay'} (True)`, url: brandProfile.website || `https://${brandSlug}.com`, isTrue: true },
   ];
 
   const handleCheck = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputUrl.trim()) return;
 
-    const result = await checkSuspiciousLink(inputUrl.trim());
+    let target = inputUrl.trim();
+    if (!target.startsWith('http://') && !target.startsWith('https://')) {
+      target = 'https://' + target;
+    }
+
+    const result = await checkSuspiciousLink(target);
     setActiveResult(result);
   };
 
@@ -86,37 +104,40 @@ export const CheckLinkPage: React.FC = () => {
       <div className="pb-4 border-b border-slate-800/80">
         <div className="flex items-center gap-2 mb-1.5">
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Check a suspicious link
+            Check Suspicious Link & Brand Authenticity
           </h2>
           <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-cyan-400 px-2.5 py-0.5 rounded-full bg-cyan-950/60 border border-cyan-500/30">
             <Link2 className="w-3 h-3" />
-            [DEEP_SCAN]
+            [UNIVERSAL_BRAND_SCAN]
           </span>
         </div>
         <p className="text-xs text-slate-400">
-          Paste a link from an email, SMS message, website, or social profile for instant heuristic and DNS spoofing analysis.
+          Paste <strong>any link from any brand</strong> (PayPal, Apple, Google, Amazon, Netflix, Chase, banks, or your registered brand). 
+          Our deep verification engine determines whether the destination is <strong>TRUE</strong> (Authentic & Genuine) or <strong>FALSE</strong> (Deceptive / Phishing / Fake).
         </p>
       </div>
 
       {/* URL Input Form with SpotlightCard */}
       <SpotlightCard
+        enable3DTilt={false}
         spotlightColor="rgba(6, 182, 212, 0.18)"
         className="p-6 sm:p-7 rounded-2xl unlumen-card border border-cyan-500/25 space-y-4 shadow-xl"
       >
         <form onSubmit={handleCheck} className="space-y-3">
-          <label htmlFor="suspicious-link-input" className="block text-slate-200 font-semibold text-xs font-mono uppercase tracking-wider">
-            Target URL or Suspicious Hostname
+          <label htmlFor="suspicious-link-input" className="block text-slate-200 font-semibold text-xs font-mono uppercase tracking-wider flex items-center justify-between">
+            <span>Target URL or Suspicious Hostname (Any Brand)</span>
+            <span className="text-[10px] text-cyan-400 lowercase font-normal">accepts domains with or without https://</span>
           </label>
           <div className="flex flex-col sm:flex-row gap-2.5">
             <div className="relative flex-1 group">
               <Link2 className="w-4 h-4 text-slate-400 group-focus-within:text-cyan-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors" />
               <input
                 id="suspicious-link-input"
-                type="url"
+                type="text"
                 required
                 value={inputUrl}
                 onChange={(e) => setInputUrl(e.target.value)}
-                placeholder="https://acmepay-help-resolution.xyz/login"
+                placeholder="e.g. paypal-security-update.xyz or accounts.google.com"
                 className="w-full pl-9 pr-4 py-3 rounded-xl bg-slate-950/90 border border-slate-700/80 text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 font-mono text-xs shadow-inner transition-all"
               />
             </div>
@@ -130,41 +151,72 @@ export const CheckLinkPage: React.FC = () => {
               >
                 <Search className={`w-4 h-4 text-cyan-400 ${isCheckingLink ? 'animate-spin' : ''}`} />
                 <span className="bg-gradient-to-r from-cyan-200 to-blue-200 bg-clip-text text-transparent">
-                  {isCheckingLink ? 'Analyzing Vectors...' : 'Check Link'}
+                  {isCheckingLink ? 'Analyzing Authenticity...' : 'Verify Link (True/False)'}
                 </span>
               </button>
             </div>
           </div>
         </form>
 
-        {/* Quick Example URLs */}
-        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-800/80 text-[11px]">
-          <span className="text-slate-400 font-mono text-[10px]">PRESET SAMPLES:</span>
-          {exampleUrls.map((ex) => (
-            <button
-              key={ex}
-              type="button"
-              onClick={() => handleUseExample(ex)}
-              className="px-2.5 py-1 rounded-lg bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-cyan-300 border border-slate-800 hover:border-cyan-500/30 transition-all font-mono truncate max-w-xs btn-smooth"
-            >
-              {ex}
-            </button>
-          ))}
+        {/* Quick Multi-Brand Example URLs */}
+        <div className="space-y-2 pt-3 border-t border-slate-800/80 text-[11px]">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400 font-mono text-[10px] uppercase font-bold flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3 text-cyan-400" />
+              <span>TEST ANY BRAND WITH 1-CLICK SAMPLES:</span>
+            </span>
+            <span className="text-[10px] text-slate-500 font-mono">
+              [Click to test True vs False]
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {multiBrandExamples.map((ex) => (
+              <button
+                key={ex.label}
+                type="button"
+                onClick={() => handleUseExample(ex.url)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all flex items-center gap-1 border btn-smooth ${
+                  ex.isTrue
+                    ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30 hover:bg-emerald-900/60'
+                    : 'bg-red-950/40 text-red-300 border-red-500/30 hover:bg-red-900/60'
+                }`}
+                title={`Test ${ex.label}: ${ex.url}`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${ex.isTrue ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                <span>{ex.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </SpotlightCard>
 
       {/* Active Check Result Card (If just checked or selected) */}
       {activeResult && (
         <SpotlightCard
-          spotlightColor="rgba(6, 182, 212, 0.2)"
-          className="p-6 sm:p-7 rounded-2xl unlumen-card border border-cyan-500/35 space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+          enable3DTilt={false}
+          spotlightColor={activeResult.isTrueBrand ? "rgba(16, 185, 129, 0.25)" : "rgba(239, 68, 68, 0.25)"}
+          className={`p-6 sm:p-7 rounded-2xl unlumen-card border space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${
+            activeResult.isTrueBrand 
+              ? 'border-emerald-500/40 shadow-emerald-950/30' 
+              : 'border-red-500/45 shadow-red-950/40'
+          }`}
         >
+          {/* Header Row */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
             <div>
-              <span className="text-[10px] font-mono uppercase font-bold text-slate-400 tracking-wider block">
-                [INSPECTION_DOSSIER]
-              </span>
-              <h3 className="text-base font-bold text-white font-mono mt-0.5 break-all">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-mono uppercase font-bold text-slate-400 tracking-wider">
+                  [INSPECTION_DOSSIER]
+                </span>
+                <SourceStatusBadge status="LIVE DATA" compact={true} />
+                {activeResult.brandCategory && (
+                  <span className="text-[10px] font-mono text-cyan-400 px-2 py-0.5 rounded bg-cyan-950/70 border border-cyan-500/30">
+                    {activeResult.brandCategory}
+                  </span>
+                )}
+              </div>
+              <h3 className="text-base font-bold text-white font-mono break-all">
                 {activeResult.url}
               </h3>
             </div>
@@ -182,11 +234,77 @@ export const CheckLinkPage: React.FC = () => {
             })()}
           </div>
 
+          {/* HIGH-IMPACT TRUE / FALSE VERDICT BANNER */}
+          {activeResult.isTrueBrand || activeResult.verdictBoolean === 'TRUE' ? (
+            <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-r from-emerald-950/80 via-emerald-900/30 to-slate-950 border border-emerald-500/50 flex items-start sm:items-center justify-between gap-4 shadow-lg shadow-emerald-950/40">
+              <div className="flex items-start sm:items-center gap-3.5">
+                <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex-shrink-0 mt-0.5 sm:mt-0">
+                  <ShieldCheck className="w-7 h-7 text-emerald-400" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="px-2.5 py-0.5 rounded text-[11px] font-mono font-black uppercase tracking-wider bg-emerald-500 text-slate-950 shadow-sm">
+                      VERDICT: TRUE
+                    </span>
+                    <span className="text-emerald-300 font-bold text-sm tracking-wide">
+                      GENUINE & AUTHENTIC BRAND DOMAIN
+                    </span>
+                  </div>
+                  <p className="text-slate-300 text-xs leading-relaxed">
+                    This link is confirmed as the official, authentic web property for{' '}
+                    <strong className="text-white font-semibold">{activeResult.detectedBrand || 'Official Brand'}</strong>{' '}
+                    (<span className="font-mono text-emerald-400">{activeResult.officialDomain}</span>). 
+                    Direct cryptographic SSL and authoritative enterprise DNS confirmed.
+                  </p>
+                </div>
+              </div>
+              <span className="hidden md:inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex-shrink-0">
+                [AUTHENTIC_SAFE]
+              </span>
+            </div>
+          ) : (
+            <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-r from-red-950/90 via-rose-950/30 to-slate-950 border border-red-500/60 flex items-start sm:items-center justify-between gap-4 shadow-xl shadow-red-950/50">
+              <div className="flex items-start sm:items-center gap-3.5">
+                <div className="p-2.5 rounded-xl bg-red-500/20 text-red-400 border border-red-500/40 flex-shrink-0 mt-0.5 sm:mt-0">
+                  <AlertOctagon className="w-7 h-7 text-red-400 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="px-2.5 py-0.5 rounded text-[11px] font-mono font-black uppercase tracking-wider bg-red-500 text-white shadow-sm">
+                      VERDICT: FALSE
+                    </span>
+                    <span className="text-red-300 font-bold text-sm tracking-wide">
+                      FRAUDULENT / DECEPTIVE / PHISHING LINK
+                    </span>
+                  </div>
+                  <p className="text-slate-300 text-xs leading-relaxed">
+                    Warning: This URL is <strong className="text-red-300">NOT</strong> the genuine domain for{' '}
+                    <strong className="text-white font-semibold">{activeResult.detectedBrand || 'Target Brand'}</strong>. 
+                    The official domain is <span className="font-mono text-emerald-400">{activeResult.officialDomain}</span>. 
+                    This investigated link (<span className="font-mono text-red-400">{activeResult.checkedDomain}</span>) is an unapproved impersonator or credential harvester.
+                  </p>
+                </div>
+              </div>
+              <span className="hidden md:inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-mono font-bold bg-red-500/20 text-red-300 border border-red-500/40 flex-shrink-0">
+                [DECEPTIVE_SPOOF]
+              </span>
+            </div>
+          )}
+
           {/* Metric Comparison Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
               <span className="text-[10px] text-slate-400 uppercase font-mono font-semibold block mb-0.5">
-                Official Domain
+                Target Brand Detected
+              </span>
+              <span className="font-bold text-cyan-300 block truncate text-sm">
+                {activeResult.detectedBrand || 'Generic Web Host'}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
+              <span className="text-[10px] text-slate-400 uppercase font-mono font-semibold block mb-0.5">
+                Official Genuine Domain
               </span>
               <span className="font-mono text-emerald-400 font-bold block truncate">
                 {activeResult.officialDomain}
@@ -195,35 +313,29 @@ export const CheckLinkPage: React.FC = () => {
 
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
               <span className="text-[10px] text-slate-400 uppercase font-mono font-semibold block mb-0.5">
-                Checked Domain
+                Investigated Domain
               </span>
               <span className={`font-mono font-bold block truncate ${
-                activeResult.verdict === 'Approved' ? 'text-emerald-400' : 'text-red-400'
+                activeResult.isTrueBrand ? 'text-emerald-400' : 'text-red-400'
               }`}>
                 {activeResult.checkedDomain}
               </span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
-              <span className="text-[10px] text-slate-400 uppercase font-mono font-semibold block mb-0.5">
+            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+              <span className="text-[10px] text-slate-400 uppercase font-mono font-semibold block">
                 Risk Score
               </span>
-              <span className="text-white font-mono font-bold block">
-                {activeResult.riskScore} / 100
-              </span>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
-              <span className="text-[10px] text-slate-400 uppercase font-mono font-semibold block mb-0.5">
-                Confidence
-              </span>
-              <span className="text-cyan-400 font-mono font-semibold block">
-                {activeResult.confidence} Confidence
-              </span>
+              <div className="flex items-center gap-1.5">
+                <RiskBadge severity={activeResult.riskSeverity} uppercase={true} size="sm" />
+                <span className="text-white font-mono font-bold text-xs">
+                  {activeResult.riskScore}/100
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Screenshot placeholder & redirect info */}
+          {/* Threat Classification & Telemetry details */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
             <div className="h-28 rounded-xl bg-slate-950/90 border border-slate-800 flex flex-col items-center justify-center p-3 text-center shadow-inner">
               <Camera className="w-6 h-6 text-cyan-400/60 mb-1" />
@@ -235,28 +347,39 @@ export const CheckLinkPage: React.FC = () => {
             <div className="sm:col-span-2 space-y-2">
               <div>
                 <span className="text-[10px] text-slate-400 uppercase font-mono font-bold block">
-                  Redirect information
+                  Threat Classification & Vector
                 </span>
                 <p className="text-slate-300 font-mono text-[11px] mt-0.5">
-                  {activeResult.redirectInfo}
+                  {activeResult.threatClassification || activeResult.redirectInfo}
                 </p>
               </div>
 
               <div>
                 <span className="text-[10px] text-slate-400 uppercase font-mono font-bold block">
-                  Recommended action
+                  Recommended SecOps Action
                 </span>
                 <p className="text-white font-semibold text-xs mt-0.5">
                   {activeResult.recommendedAction}
                 </p>
               </div>
+
+              {activeResult.webRiskStatus && (
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-mono font-bold block">
+                    Google Web Risk & Safe Browsing
+                  </span>
+                  <p className="text-cyan-400 font-mono text-[11px] mt-0.5">
+                    {activeResult.webRiskStatus}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Why this was flagged */}
           <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/90 space-y-1">
             <span className="text-xs font-bold text-white block">
-              Why this was flagged
+              Forensic Explanation (Why Flagged)
             </span>
             <p className="text-slate-300 leading-relaxed text-xs">
               {activeResult.whyFlagged}
@@ -267,12 +390,12 @@ export const CheckLinkPage: React.FC = () => {
           <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/80">
             <button
               onClick={() => setActiveResult(null)}
-              className="text-xs text-slate-400 hover:text-white transition-colors btn-smooth"
+              className="text-xs text-slate-400 hover:text-white transition-colors btn-smooth font-mono"
             >
-              Check another link
+              ← Analyze Another Link
             </button>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 font-mono">
               <button
                 onClick={() => {
                   dismissLinkCheck(activeResult.id);
@@ -291,7 +414,7 @@ export const CheckLinkPage: React.FC = () => {
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30 transition-all flex items-center gap-1.5 btn-smooth shadow-sm"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Add to findings</span>
+                <span>Add to Active Findings</span>
               </button>
             </div>
           </div>
@@ -312,6 +435,7 @@ export const CheckLinkPage: React.FC = () => {
           {linkChecks.map((item) => {
             const badge = getVerdictBadge(item.verdict);
             const Icon = badge.icon;
+            const isItemTrue = item.isTrueBrand ?? (item.verdictBoolean === 'TRUE' || item.verdict === 'Approved');
 
             return (
               <div
@@ -321,6 +445,13 @@ export const CheckLinkPage: React.FC = () => {
               >
                 <div className="min-w-0 space-y-1">
                   <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                      isItemTrue 
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                        : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                    }`}>
+                      {isItemTrue ? 'TRUE' : 'FALSE'}
+                    </span>
                     <span className="font-mono text-white group-hover:text-cyan-300 font-semibold truncate block max-w-md">
                       {item.url}
                     </span>

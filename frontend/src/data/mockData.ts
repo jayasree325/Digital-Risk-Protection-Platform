@@ -1,4 +1,17 @@
-import { Finding, BrandProfile, SourceStatusItem, LinkCheckRecord } from '../types';
+import { 
+  Finding, 
+  BrandProfile, 
+  SourceStatusItem, 
+  LinkCheckRecord,
+  InvestigationCase,
+  CaseActivity,
+  FindingChangeRecord,
+  TrustGraphData,
+  RiskSignalSimulation,
+  EvidenceIntegrityData,
+  TriageRecommendation,
+  VerificationSearchResult
+} from '../types';
 
 export const initialBrandProfile: BrandProfile = {
   companyName: 'AcmePay Technologies Inc.',
@@ -72,7 +85,7 @@ export const sourceStatuses: SourceStatusItem[] = [
     id: 'src-1',
     name: 'Social sources',
     status: 'live',
-    statusLabel: 'Live',
+    statusLabel: 'Live source',
     lastSync: '2 mins ago',
     tooltipText: 'Continuous public stream ingestion active across Instagram, X, LinkedIn, and Facebook.',
   },
@@ -80,7 +93,7 @@ export const sourceStatuses: SourceStatusItem[] = [
     id: 'src-2',
     name: 'App store source',
     status: 'live',
-    statusLabel: 'Live',
+    statusLabel: 'Live source',
     lastSync: '5 mins ago',
     tooltipText: 'Automated catalog crawler active on Google Play Store and third-party APK mirrors.',
   },
@@ -88,7 +101,7 @@ export const sourceStatuses: SourceStatusItem[] = [
     id: 'src-3',
     name: 'Domain intelligence',
     status: 'rate_limited',
-    statusLabel: 'Rate-limited',
+    statusLabel: 'Rate limited',
     lastSync: '18 mins ago',
     tooltipText: 'Temporary query threshold reached on lookup registry. Auto-resumes shortly.',
   },
@@ -96,9 +109,9 @@ export const sourceStatuses: SourceStatusItem[] = [
     id: 'src-4',
     name: 'Demo data',
     status: 'demo_data',
-    statusLabel: 'Demo data (Active)',
+    statusLabel: 'Demo data',
     lastSync: 'Local session',
-    tooltipText: 'Populated with realistic demo attack campaigns for AcmePay. Not live external API.',
+    tooltipText: 'Populated with realistic demo attack campaigns for AcmePay. Uses simulated data rather than live external intelligence.',
   },
 ];
 
@@ -653,7 +666,7 @@ export const initialFindings: Finding[] = [
     publisherOrOwner: 'Telegram handle @acmepay_security_agent',
     candidateWebsite: 'acmepay-vault-reset.net',
     description: 'Official Telegram Security Division of AcmePay. We verify compromised accounts 24/7.',
-    avatarColor: 'from-purple-600 to-indigo-800',
+    avatarColor: 'from-emerald-600 to-teal-800',
     avatarInitials: 'ST',
     lookalike: {
       official: 'AcmePay',
@@ -943,7 +956,7 @@ export const initialFindings: Finding[] = [
     publisherOrOwner: 'Private user handle',
     candidateWebsite: 'acmepay-privateclient.com',
     description: 'Exclusive tier management for premier AcmePay merchant accounts. Direct concierge line.',
-    avatarColor: 'from-indigo-600 to-purple-800',
+    avatarColor: 'from-teal-600 to-emerald-800',
     avatarInitials: 'VC',
     lookalike: {
       official: 'AcmePay',
@@ -1652,7 +1665,7 @@ export const initialFindings: Finding[] = [
     publisherOrOwner: 'DEX Gateway Foundation (Belize)',
     candidateWebsite: 'acmepay-swap.io',
     description: 'Instant crypto to fiat swap backed by AcmePay high-speed settlement protocol.',
-    avatarColor: 'from-purple-700 to-indigo-900',
+    avatarColor: 'from-cyan-700 to-emerald-900',
     avatarInitials: 'CS',
     lookalike: {
       official: 'AcmePay',
@@ -1821,3 +1834,592 @@ export const initialFindings: Finding[] = [
     ],
   },
 ];
+
+// ============================================================================
+// FEATURE 2: UNIFIED CASE MANAGEMENT DEMO DATA
+// ============================================================================
+export const initialInvestigationCases: InvestigationCase[] = [
+  {
+    id: 'case-001',
+    caseNumber: 'CASE-2026-081',
+    title: 'Credential Harvest via Telegram VIP Support Rings',
+    description: 'Coordinated imposter network operating automated bots and lookalike support groups to intercept customer seed phrases and authentication codes.',
+    status: 'Investigating',
+    priority: 'Critical',
+    assignedAnalyst: 'Alex Mercer (SecOps Lead)',
+    createdAt: 'Oct 14, 2026 09:30 UTC',
+    updatedAt: '2 hours ago',
+    findingIds: ['finding-1', 'finding-4', 'finding-7'],
+    evidenceCount: 14,
+    scamMessageSnippets: [
+      '“URGENT: Your AcmePay account has a pending transfer of $4,500. Click here to verify authorization within 10 minutes.”',
+      '“Dear customer, our VIP automated support agent will assist you to unlock your suspended wallet immediately.”',
+    ],
+    tags: ['Telegram Bot', 'Credential Harvesting', 'Phishing Ring', 'Active Campaign'],
+    notes: [
+      'Identified same Bitly redirect backend across 3 separate Telegram channels.',
+      'Drafted formal platform takedown request with cryptographically hashed screenshot proof.',
+      'Customer Warning banner queued for verified social accounts.',
+    ],
+    activities: [
+      {
+        id: 'act-1',
+        author: 'Alex Mercer',
+        role: 'SecOps Lead',
+        action: 'Case opened from high-priority alert cluster',
+        timestamp: 'Oct 14, 2026 09:30 UTC',
+        note: 'Grouped 3 related findings sharing domain infrastructure.',
+      },
+      {
+        id: 'act-2',
+        author: 'Elena Rostova',
+        role: 'Threat Intelligence',
+        action: 'Attached DNS telemetry & shared ASN records',
+        timestamp: 'Oct 15, 2026 14:15 UTC',
+      },
+      {
+        id: 'act-3',
+        author: 'Alex Mercer',
+        role: 'SecOps Lead',
+        action: 'Status changed to Investigating',
+        timestamp: '2 hours ago',
+        note: 'Escalated to legal takedown workflow.',
+      },
+    ],
+  },
+  {
+    id: 'case-002',
+    caseNumber: 'CASE-2026-044',
+    title: 'Trojanized APK Lookalike Campaign on Third-Party Stores',
+    description: 'Deceptive Android APK mimicking AcmePay Mobile with unauthorized accessibility and SMS interception permissions distributed across APKPure and third-party mirrors.',
+    status: 'Escalated',
+    priority: 'High',
+    assignedAnalyst: 'Sarah Jenkins (Mobile Threat Analyst)',
+    createdAt: 'Oct 12, 2026 11:20 UTC',
+    updatedAt: '5 hours ago',
+    findingIds: ['finding-2', 'finding-6'],
+    evidenceCount: 9,
+    scamMessageSnippets: [
+      '“Download AcmePay QuickTransfer 2026 Update for instant fee-free cross-border settlements!”',
+    ],
+    tags: ['Android Trojan', 'Overlay Attack', 'APK Mirror', 'High Severity'],
+    notes: [
+      'Decompiled manifest reveals request for BIND_ACCESSIBILITY_SERVICE and RECEIVE_SMS.',
+      'Reported malicious hash to Google Play Protect database.',
+    ],
+    activities: [
+      {
+        id: 'act-201',
+        author: 'Sarah Jenkins',
+        role: 'Mobile Threat Analyst',
+        action: 'Created investigation case for package com.acmepay.quicktransfer',
+        timestamp: 'Oct 12, 2026 11:20 UTC',
+      },
+      {
+        id: 'act-202',
+        author: 'Sarah Jenkins',
+        role: 'Mobile Threat Analyst',
+        action: 'Status changed to Escalated',
+        timestamp: '5 hours ago',
+        note: 'Submitted takedown notice to hosting CDN.',
+      },
+    ],
+  },
+  {
+    id: 'case-003',
+    caseNumber: 'CASE-2026-019',
+    title: 'Typosquat Domain Squatting & Fast-Flux Redirects',
+    description: 'Batch registration of lookalike domains (acmepay-secure-login.com, acmepay-helpdesk.online) pointing to fraudulent cloud instances.',
+    status: 'Open',
+    priority: 'Medium',
+    assignedAnalyst: 'Elena Rostova (Threat Intelligence)',
+    createdAt: 'Oct 16, 2026 16:45 UTC',
+    updatedAt: '1 day ago',
+    findingIds: ['finding-3', 'finding-5'],
+    evidenceCount: 6,
+    tags: ['Domain Squatting', 'Typosquatting', 'DNS Flux'],
+    notes: [
+      'Domains registered via privacy proxy with NameCheap.',
+      'DNS records cycling between 4 bulletproof European IP ranges.',
+    ],
+    activities: [
+      {
+        id: 'act-301',
+        author: 'Elena Rostova',
+        role: 'Threat Intelligence',
+        action: 'Case opened from automated WHOIS detection feed',
+        timestamp: 'Oct 16, 2026 16:45 UTC',
+      },
+    ],
+  },
+  {
+    id: 'case-004',
+    caseNumber: 'CASE-2026-003',
+    title: 'Unauthorized Brand Affiliate & Reseller Impersonators',
+    description: 'Affiliate accounts misrepresenting themselves as official corporate regional branches and soliciting direct customer deposits.',
+    status: 'Resolved',
+    priority: 'Low',
+    assignedAnalyst: 'Devon Vance (Legal & Compliance)',
+    createdAt: 'Oct 05, 2026 08:10 UTC',
+    updatedAt: '3 days ago',
+    findingIds: ['finding-8'],
+    evidenceCount: 4,
+    tags: ['Brand Infringement', 'Trademark Misuse', 'Compliance'],
+    notes: [
+      'Account agreed to remove trademarked logos and add explicit unofficial affiliate disclaimer.',
+    ],
+    activities: [
+      {
+        id: 'act-401',
+        author: 'Devon Vance',
+        role: 'Legal & Compliance',
+        action: 'Case opened for trademark review',
+        timestamp: 'Oct 05, 2026 08:10 UTC',
+      },
+      {
+        id: 'act-402',
+        author: 'Devon Vance',
+        role: 'Legal & Compliance',
+        action: 'Status updated to Resolved',
+        timestamp: '3 days ago',
+        note: 'Affiliate brought into compliance.',
+      },
+    ],
+  },
+];
+
+// ============================================================================
+// FEATURE 3: TRUST GRAPH DEMO GENERATOR
+// ============================================================================
+export const getTrustGraphForFinding = (finding: Finding): TrustGraphData => {
+  const officialDomain = 'acmepay.com';
+  const targetEntity = finding.usernameOrPackage || finding.title;
+  const targetDomain = finding.candidateWebsite || `${finding.lookalike?.candidate || 'candidate'}.online`;
+  const publisher = finding.publisherOrOwner || 'Unverified Registrar LLC';
+
+  return {
+    nodes: [
+      {
+        id: 'node-official-brand',
+        label: 'AcmePay Official (Verified Asset)',
+        type: 'official',
+        detail: officialDomain,
+        riskLevel: 'safe',
+      },
+      {
+        id: 'node-finding-target',
+        label: `${finding.type === 'app' ? 'Suspicious App' : 'Imposter Profile'}: ${targetEntity}`,
+        type: finding.type === 'app' ? 'mobile_app' : 'suspicious_profile',
+        detail: finding.platform,
+        riskLevel: finding.riskSeverity,
+      },
+      {
+        id: 'node-target-domain',
+        label: `Phishing Domain: ${targetDomain}`,
+        type: 'suspicious_domain',
+        detail: 'Hosting landing form',
+        riskLevel: 'critical',
+      },
+      {
+        id: 'node-publisher',
+        label: `Publisher: ${publisher}`,
+        type: 'publisher',
+        detail: 'Detected entity',
+        riskLevel: 'high',
+      },
+      {
+        id: 'node-infrastructure',
+        label: 'Shared Host: AS49505 (FastFlux Offshore)',
+        type: 'infrastructure',
+        detail: 'IP: 185.220.101.44',
+        riskLevel: 'critical',
+      },
+    ],
+    edges: [
+      {
+        id: 'edge-1',
+        source: 'node-official-brand',
+        target: 'node-finding-target',
+        reason: 'Copied branding & logo elements',
+        confidence: 'High',
+      },
+      {
+        id: 'edge-2',
+        source: 'node-finding-target',
+        target: 'node-target-domain',
+        reason: 'Shared domain & bio redirect link',
+        confidence: 'High',
+      },
+      {
+        id: 'edge-3',
+        source: 'node-finding-target',
+        target: 'node-publisher',
+        reason: 'Shared publisher & registrant record',
+        confidence: 'Medium',
+      },
+      {
+        id: 'edge-4',
+        source: 'node-target-domain',
+        target: 'node-infrastructure',
+        reason: 'Shared ASN & hosting infrastructure',
+        confidence: 'High',
+      },
+    ],
+  };
+};
+
+// ============================================================================
+// FEATURE 4: CHANGE DETECTION DEMO DATA
+// ============================================================================
+export const getFindingChanges = (finding: Finding): FindingChangeRecord[] => {
+  return [
+    {
+      id: 'chg-1',
+      timestamp: '2 hours ago',
+      attribute: 'Risk Score',
+      changeType: 'Risk Increased',
+      previousValue: `${Math.max(finding.riskScore - 15, 45)}%`,
+      currentValue: `${finding.riskScore}%`,
+      explanation: 'Risk score elevated after new telemetry verified high visual trademark similarity and phishing link redirect in bio.',
+    },
+    {
+      id: 'chg-2',
+      timestamp: '1 day ago',
+      attribute: 'Suspicious Link',
+      changeType: 'Changed',
+      previousValue: 'None registered',
+      currentValue: finding.candidateWebsite || 'https://acmepay-support.help',
+      explanation: 'Actor added an external link leading through a shortener to an unverified credential harvesting portal.',
+    },
+    {
+      id: 'chg-3',
+      timestamp: '3 days ago',
+      attribute: 'Logo',
+      changeType: 'Changed',
+      previousValue: 'Generic placeholder graphic',
+      currentValue: 'Exact AcmePay trademark emblem',
+      explanation: 'Profile avatar replaced with authentic AcmePay registered emblem with homoglyph overlay.',
+    },
+    {
+      id: 'chg-4',
+      timestamp: '6 days ago',
+      attribute: 'Description',
+      changeType: 'Changed',
+      previousValue: 'Personal enthusiast blog',
+      currentValue: finding.description,
+      explanation: 'Bio revised to claim official customer assistance, urgent refund claims, and support routing.',
+    },
+    {
+      id: 'chg-5',
+      timestamp: '10 days ago',
+      attribute: 'Activity',
+      changeType: 'New',
+      previousValue: 'Inactive',
+      currentValue: 'Active impersonation stream',
+      explanation: 'First ingested by BrandGuard distributed monitoring stream.',
+    },
+  ];
+};
+
+// ============================================================================
+// FEATURE 5: RISK SCORE SIMULATOR SIGNALS
+// ============================================================================
+export const getRiskSimulatorSignals = (finding: Finding): RiskSignalSimulation[] => {
+  const hasDomain = finding.candidateWebsite && finding.candidateWebsite.length > 0;
+  const hasLogoSignal = finding.signals.some((s) => s.iconName === 'logo');
+  const hasNameSignal = finding.signals.some((s) => s.iconName === 'name');
+  const hasOwnerSignal = finding.signals.some((s) => s.iconName === 'owner');
+
+  return [
+    {
+      id: 'sim-name',
+      name: 'Name similarity & homoglyphs',
+      description: 'Candidate handle or title closely mimics registered trademark.',
+      weight: 25,
+      enabled: hasNameSignal || true,
+      category: 'name',
+    },
+    {
+      id: 'sim-logo',
+      name: 'Copied logo & visual trademark',
+      description: 'Visual logo features high perceptual hash overlap with official brand mark.',
+      weight: 30,
+      enabled: hasLogoSignal || true,
+      category: 'logo',
+    },
+    {
+      id: 'sim-domain',
+      name: 'Suspicious domain & redirect',
+      description: 'Links point to unapproved domain or high-risk fast-flux hosting.',
+      weight: 20,
+      enabled: Boolean(hasDomain),
+      category: 'domain',
+    },
+    {
+      id: 'sim-owner',
+      name: 'Unknown owner / privacy guard',
+      description: 'Registrant details obscured by offshore privacy shield.',
+      weight: 15,
+      enabled: hasOwnerSignal || true,
+      category: 'owner',
+    },
+    {
+      id: 'sim-pub',
+      name: 'Publisher mismatch',
+      description: 'Mobile publisher or account creator lacks enterprise authorization token.',
+      weight: 10,
+      enabled: finding.type === 'app',
+      category: 'publisher',
+    },
+  ];
+};
+
+// ============================================================================
+// FEATURE 6: EVIDENCE INTEGRITY RECORD DEMO DATA
+// ============================================================================
+export const getEvidenceIntegrityForFinding = (finding: Finding): EvidenceIntegrityData => {
+  return {
+    id: `ev-int-${finding.id}`,
+    source: finding.evidence.source || 'BrandGuard Distributed Public Sensor',
+    captureTime: finding.evidence.detectedAt || 'Oct 17, 2026 14:22 UTC',
+    lastVerificationTime: '12 mins ago',
+    screenshotStatus: 'Available',
+    sha256Hash: finding.evidence.sha256Hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    evidenceStatus: 'Verified',
+    isTamperFree: true,
+    auditHistory: [
+      {
+        timestamp: 'Oct 17, 2026 14:22 UTC',
+        action: 'Evidence ingested and cryptographically signed',
+        verifiedBy: 'BrandGuard Ingestion Daemon v4.2',
+        hashMatches: true,
+      },
+      {
+        timestamp: 'Oct 18, 2026 09:10 UTC',
+        action: 'Automated cryptographic integrity check',
+        verifiedBy: 'Evidence Sentinel Service',
+        hashMatches: true,
+      },
+      {
+        timestamp: 'Today at 10:45 UTC',
+        action: 'Analyst manual audit & forensic confirmation',
+        verifiedBy: 'Alex Mercer (SecOps Lead)',
+        hashMatches: true,
+      },
+    ],
+  };
+};
+
+// ============================================================================
+// FEATURE 7: TRIAGE RECOMMENDATION DEMO DATA
+// ============================================================================
+export const getTriageRecommendationForFinding = (finding: Finding): TriageRecommendation => {
+  if (finding.riskScore >= 85) {
+    return {
+      id: `triage-${finding.id}`,
+      action: 'Escalate',
+      priority: 'Critical',
+      reason: 'Extremely high risk score (>=85%) with confirmed brand infringement, copied assets, and deceptive credential prompts.',
+      status: 'Recommended',
+      suggestedWorkflow: '1. Preserve cryptographic evidence. 2. Dispatch platform takedown notice. 3. Notify internal fraud ops.',
+      requiresConfirmation: true,
+    };
+  }
+  if (finding.type === 'app') {
+    return {
+      id: `triage-${finding.id}`,
+      action: 'Contact Platform',
+      priority: 'High',
+      reason: 'Unverified APK masquerading as official payment client on public mirrors with invasive device permissions.',
+      status: 'Recommended',
+      suggestedWorkflow: 'Submit store takedown ticket with digital certificate proof and SHA-256 package signature.',
+      requiresConfirmation: true,
+    };
+  }
+  if (finding.status === 'New') {
+    return {
+      id: `triage-${finding.id}`,
+      action: 'Verify Ownership',
+      priority: 'Medium',
+      reason: 'Newly flagged candidate asset requires manual review against approved partner and affiliate directory.',
+      status: 'Recommended',
+      suggestedWorkflow: 'Check internal partner roster or send verification inquiry before escalating.',
+      requiresConfirmation: true,
+    };
+  }
+  return {
+    id: `triage-${finding.id}`,
+    action: 'Monitor Changes',
+    priority: 'Low',
+    reason: 'Medium risk heuristic score without active phishing links. Periodic change detection scan advised.',
+    status: 'Recommended',
+    suggestedWorkflow: 'Keep on active monitoring schedule to trigger alerts if bio, logo, or links change.',
+    requiresConfirmation: false,
+  };
+};
+
+// ============================================================================
+// FEATURE 1: PUBLIC BRAND VERIFICATION RESOLVER
+// ============================================================================
+export const mockVerifyPublicQuery = (
+  query: string,
+  brandProfile: BrandProfile,
+  findings: Finding[]
+): VerificationSearchResult => {
+  const clean = query.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
+
+  // 1. Check official assets
+  const officialDomain = (brandProfile?.website || 'acmepay.com').toLowerCase();
+  const isOfficialDomain = clean === officialDomain || clean.endsWith('.' + officialDomain);
+  const matchedOfficialSocial = (brandProfile?.officialSocials || []).find((s) => {
+    const handleClean = s.handle.toLowerCase().replace('@', '');
+    const urlClean = s.profileUrl.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
+    return clean === handleClean || clean === `@${handleClean}` || clean === urlClean;
+  });
+  const matchedOfficialApp = (brandProfile?.officialApps || []).find((a) => {
+    return clean === a.packageId.toLowerCase() || clean === a.name.toLowerCase();
+  });
+  const isOfficialSupport = clean.includes('support@acmepay.com') || clean.includes('help.acmepay.com');
+
+  if (isOfficialDomain || matchedOfficialSocial || matchedOfficialApp || isOfficialSupport) {
+    return {
+      query,
+      verdict: 'Verified Official',
+      confidenceScore: 99,
+      checkedAt: 'Just now (Real-time)',
+      matchedAsset: matchedOfficialSocial
+        ? {
+            name: matchedOfficialSocial.displayName,
+            type: 'social',
+            url: matchedOfficialSocial.profileUrl,
+            platform: matchedOfficialSocial.platform,
+            verifiedDate: matchedOfficialSocial.verifiedDate,
+          }
+        : matchedOfficialApp
+        ? {
+            name: matchedOfficialApp.name,
+            type: 'app',
+            url: matchedOfficialApp.storeUrl,
+            platform: matchedOfficialApp.platform,
+            verifiedDate: matchedOfficialApp.verifiedDate,
+          }
+        : {
+            name: brandProfile?.companyName || 'AcmePay Official Portal',
+            type: isOfficialSupport ? 'support_channel' : 'domain',
+            url: `https://${brandProfile?.website || 'acmepay.com'}`,
+            verifiedDate: 'Active Enterprise Verification',
+          },
+      officialCompany: {
+        name: brandProfile?.companyName || 'AcmePay Technologies Inc.',
+        website: brandProfile?.website || 'acmepay.com',
+        officialSocials: brandProfile?.officialSocials || [],
+        officialApps: brandProfile?.officialApps || [],
+        supportChannels: [
+          { channel: 'Official Support Desk', contact: 'https://help.acmepay.com', responseTime: '< 15 mins' },
+          { channel: 'Fraud Reporting Email', contact: 'security@acmepay.com', responseTime: '24/7 Monitored' },
+          { channel: 'Verified Phone Support', contact: '+1 (800) 555-ACME', responseTime: 'Business Hours' },
+        ],
+        activeWarnings: [
+          'AcmePay will never ask for your password, PIN, or 2FA codes via SMS or Telegram.',
+          'Always verify that links begin strictly with https://acmepay.com before entering credentials.',
+        ],
+      },
+      notes: 'This asset is verified as authentic and officially managed by AcmePay Technologies Inc.',
+      isDemoData: true,
+    };
+  }
+
+  // 2. Check known suspicious findings
+  const matchedFinding = findings.find((f) => {
+    const handleClean = f.usernameOrPackage.toLowerCase().replace('@', '');
+    const titleClean = f.title.toLowerCase();
+    const domainClean = (f.candidateWebsite || '').toLowerCase();
+    const urlClean = f.candidateUrl.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
+    return clean === handleClean || clean === `@${handleClean}` || clean.includes(titleClean) || (domainClean && clean.includes(domainClean)) || clean === urlClean;
+  });
+
+  if (matchedFinding || clean.includes('claim') || clean.includes('bonus') || clean.includes('free') || clean.includes('support-acme')) {
+    return {
+      query,
+      verdict: 'Suspicious',
+      confidenceScore: 94,
+      checkedAt: 'Just now (Real-time)',
+      matchedAsset: {
+        name: matchedFinding ? matchedFinding.title : query,
+        type: matchedFinding ? (matchedFinding.type === 'app' ? 'app' : 'social') : 'domain',
+        url: matchedFinding ? matchedFinding.candidateUrl : `https://${query}`,
+        verifiedDate: 'Flagged by BrandGuard Threat Intelligence',
+      },
+      warnings: [
+        'High impersonation risk: Uses unauthorized brand logos and deceptive keywords.',
+        'Not affiliated with AcmePay Technologies Inc.',
+        'Do not input personal credentials, payment info, or one-time passcodes.',
+      ],
+      officialCompany: {
+        name: brandProfile?.companyName || 'AcmePay Technologies Inc.',
+        website: brandProfile?.website || 'acmepay.com',
+        officialSocials: brandProfile?.officialSocials || [],
+        officialApps: brandProfile?.officialApps || [],
+        supportChannels: [
+          { channel: 'Official Support Desk', contact: 'https://help.acmepay.com', responseTime: '< 15 mins' },
+          { channel: 'Fraud Reporting Email', contact: 'security@acmepay.com', responseTime: '24/7 Monitored' },
+        ],
+        activeWarnings: [
+          'AcmePay will never contact you via unofficial channels to demand deposits.',
+        ],
+      },
+      notes: 'Flagged as potential impersonation or unauthorized brand asset. Exercise extreme caution.',
+      isDemoData: true,
+    };
+  }
+
+  // 3. Unavailable test condition
+  if (clean === 'error' || clean === 'offline' || clean === 'down') {
+    return {
+      query,
+      verdict: 'Unavailable',
+      confidenceScore: 0,
+      checkedAt: 'Just now',
+      officialCompany: {
+        name: brandProfile?.companyName || 'AcmePay Technologies Inc.',
+        website: brandProfile?.website || 'acmepay.com',
+        officialSocials: brandProfile?.officialSocials || [],
+        officialApps: brandProfile?.officialApps || [],
+        supportChannels: [
+          { channel: 'Official Support Desk', contact: 'https://help.acmepay.com', responseTime: '< 15 mins' },
+        ],
+        activeWarnings: [],
+      },
+      notes: 'The verification service could not reach the target registry or target service timed out. Please try again.',
+      isDemoData: true,
+    };
+  }
+
+  // 4. Default: Not Recognized
+  return {
+    query,
+    verdict: 'Not Recognized',
+    confidenceScore: 82,
+    checkedAt: 'Just now (Real-time)',
+    warnings: [
+      'This link or profile is not in AcmePay’s official asset registry.',
+      'It could be an independent third party, an unauthorized affiliate, or an unlisted service.',
+      'Never provide sensitive payment or account credentials on unverified websites.',
+    ],
+    officialCompany: {
+      name: brandProfile?.companyName || 'AcmePay Technologies Inc.',
+      website: brandProfile?.website || 'acmepay.com',
+      officialSocials: brandProfile?.officialSocials || [],
+      officialApps: brandProfile?.officialApps || [],
+      supportChannels: [
+        { channel: 'Official Support Desk', contact: 'https://help.acmepay.com', responseTime: '< 15 mins' },
+        { channel: 'Fraud Reporting Email', contact: 'security@acmepay.com', responseTime: '24/7 Monitored' },
+      ],
+      activeWarnings: [
+        'If in doubt, contact AcmePay support directly through the verified mobile app or official website.',
+      ],
+    },
+    notes: 'No official verification token found for this query in AcmePay’s verified portfolio.',
+    isDemoData: true,
+  };
+};

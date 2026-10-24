@@ -38,9 +38,9 @@ export const SourceBarChart: React.FC<SourceBarChartProps> = ({
       count: appCount,
       pct: appPct,
       icon: Smartphone,
-      color: 'bg-purple-500',
-      textColor: 'text-purple-400',
-      gradient: 'from-purple-500 to-pink-500',
+      color: 'bg-[#00E5FF]',
+      textColor: 'text-[#00E5FF]',
+      gradient: 'from-[#00FFA3] to-[#00E5FF]',
     },
     {
       id: 'link' as const,
@@ -55,7 +55,7 @@ export const SourceBarChart: React.FC<SourceBarChartProps> = ({
   ];
 
   return (
-    <div className="p-4 rounded-xl bg-[#0D1425] border border-[#24324D] hover:border-[#8050FF]/40 transition-colors flex flex-col justify-between">
+    <div className="p-4 rounded-xl bg-[#0D1425] border border-[#24324D] hover:border-[#00FFA3]/40 transition-colors flex flex-col justify-between">
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-xs font-bold text-white tracking-tight">Findings by source</h4>
         <span className="text-[10px] text-slate-400 font-mono">3 Channel Types</span>

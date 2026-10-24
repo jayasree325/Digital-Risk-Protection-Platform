@@ -6,12 +6,14 @@ interface RiskBadgeProps {
   severity: RiskSeverity;
   size?: 'sm' | 'md' | 'lg';
   showIcon?: boolean;
+  uppercase?: boolean;
 }
 
 export const RiskBadge: React.FC<RiskBadgeProps> = ({ 
   severity, 
   size = 'md',
-  showIcon = true 
+  showIcon = true,
+  uppercase = false
 }) => {
   const config = {
     critical: {
@@ -38,15 +40,21 @@ export const RiskBadge: React.FC<RiskBadgeProps> = ({
       icon: Shield,
       dotColor: 'bg-slate-400',
     },
-  }[severity];
+  }[severity] || {
+    label: 'Medium Risk',
+    bg: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+    icon: AlertCircle,
+    dotColor: 'bg-amber-500',
+  };
 
   const sizeClasses = {
-    sm: 'text-xs px-2 py-0.5 gap-1',
-    md: 'text-xs font-medium px-2.5 py-1 gap-1.5',
-    lg: 'text-sm font-semibold px-3 py-1.5 gap-2',
+    sm: 'text-[10px] px-2 py-0.5 gap-1 font-mono font-bold',
+    md: 'text-xs font-semibold px-2.5 py-1 gap-1.5 font-mono',
+    lg: 'text-sm font-bold px-3 py-1.5 gap-2 font-mono',
   }[size];
 
   const IconComponent = config.icon;
+  const displayLabel = uppercase ? config.label.toUpperCase() : config.label;
 
   return (
     <span 
@@ -55,7 +63,7 @@ export const RiskBadge: React.FC<RiskBadgeProps> = ({
       aria-label={config.label}
     >
       {showIcon && <IconComponent className={size === 'sm' ? 'w-3 h-3' : size === 'lg' ? 'w-4 h-4' : 'w-3.5 h-3.5'} />}
-      <span>{config.label}</span>
+      <span>{displayLabel}</span>
     </span>
   );
 };

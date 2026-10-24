@@ -9,22 +9,22 @@ interface ConnectedThreatsPanelProps {
 export const ConnectedThreatsPanel: React.FC<ConnectedThreatsPanelProps> = ({ campaign }) => {
   if (!campaign) {
     return (
-      <div className="p-4 rounded-xl bg-navy-850 border border-slate-800 text-xs text-slate-400">
+      <div className="p-4 rounded-xl bg-[#020713] border border-slate-800 text-xs text-slate-400">
         No coordinated threat cluster detected. Candidate appears to be an isolated entity.
       </div>
     );
   }
 
   return (
-    <div className="p-4 rounded-xl bg-navy-850 border border-purple-500/30 space-y-3">
+    <div className="p-4 rounded-xl bg-[#020713] border border-[#00FFA3]/30 space-y-3">
       <div className="flex items-center justify-between border-b border-slate-800 pb-2">
         <div className="flex items-center gap-2">
-          <Network className="w-4 h-4 text-purple-400" />
+          <Network className="w-4 h-4 text-[#00FFA3]" />
           <span className="text-xs font-bold text-white tracking-tight">
             Possible connected campaign
           </span>
         </div>
-        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30">
+        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#00FFA3]/10 text-[#00FFA3] border border-[#00FFA3]/30">
           {campaign.threatLevel}
         </span>
       </div>
@@ -35,15 +35,15 @@ export const ConnectedThreatsPanel: React.FC<ConnectedThreatsPanelProps> = ({ ca
 
       {/* Node relationships list */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-        <div className="p-2.5 rounded-lg bg-navy-900 border border-slate-800 flex items-start gap-2.5">
-          <User className="w-3.5 h-3.5 text-cyan-400 mt-0.5 flex-shrink-0" />
+        <div className="p-2.5 rounded-lg bg-[#00050B] border border-[#00FFA3]/15 flex items-start gap-2.5">
+          <User className="w-3.5 h-3.5 text-[#00FFA3] mt-0.5 flex-shrink-0" />
           <div className="min-w-0">
             <span className="text-[10px] text-slate-500 uppercase font-semibold block">Social Candidate</span>
             <span className="text-slate-200 font-mono truncate block">{campaign.candidateProfile}</span>
           </div>
         </div>
 
-        <div className="p-2.5 rounded-lg bg-navy-900 border border-slate-800 flex items-start gap-2.5">
+        <div className="p-2.5 rounded-lg bg-[#00050B] border border-[#00FFA3]/15 flex items-start gap-2.5">
           <Globe className="w-3.5 h-3.5 text-orange-400 mt-0.5 flex-shrink-0" />
           <div className="min-w-0">
             <span className="text-[10px] text-slate-500 uppercase font-semibold block">Suspicious Domain</span>
@@ -52,7 +52,7 @@ export const ConnectedThreatsPanel: React.FC<ConnectedThreatsPanelProps> = ({ ca
         </div>
 
         {campaign.relatedMobileApp && (
-          <div className="p-2.5 rounded-lg bg-navy-900 border border-slate-800 flex items-start gap-2.5">
+          <div className="p-2.5 rounded-lg bg-[#00050B] border border-[#00FFA3]/15 flex items-start gap-2.5">
             <Smartphone className="w-3.5 h-3.5 text-red-400 mt-0.5 flex-shrink-0" />
             <div className="min-w-0">
               <span className="text-[10px] text-slate-500 uppercase font-semibold block">Related Mobile App</span>
@@ -61,8 +61,8 @@ export const ConnectedThreatsPanel: React.FC<ConnectedThreatsPanelProps> = ({ ca
           </div>
         )}
 
-        <div className="p-2.5 rounded-lg bg-navy-900 border border-slate-800 flex items-start gap-2.5">
-          <Server className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" />
+        <div className="p-2.5 rounded-lg bg-[#00050B] border border-[#00FFA3]/15 flex items-start gap-2.5">
+          <Server className="w-3.5 h-3.5 text-[#00E5FF] mt-0.5 flex-shrink-0" />
           <div className="min-w-0">
             <span className="text-[10px] text-slate-500 uppercase font-semibold block">Shared Infrastructure</span>
             <span className="text-slate-200 font-mono truncate block">{campaign.sharedInfrastructure}</span>

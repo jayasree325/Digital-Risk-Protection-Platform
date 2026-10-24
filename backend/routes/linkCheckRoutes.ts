@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { getDb, saveDb } from '../db';
-import { authMiddleware, AuthenticatedRequest } from '../auth';
+import { optionalAuthMiddleware, authMiddleware, AuthenticatedRequest } from '../auth';
+import { verifyUniversalLink } from '../services/universalLinkVerifier';
 
 const router = Router();
 
@@ -54,14 +55,14 @@ async function fetchLiveInstagramProfile(url: string) {
   }
 }
 
-// POST /api/link-checks
-router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+// POST /api/link-checks - Universal Brand & Suspicious Link Analyzer
+router.post('/', optionalAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const db = await getDb();
-    const companyId = req.user!.companyId;
+    const companyId = req.user?.companyId || (req.query.companyId as string) || 'comp-acmepay';
     const { url } = req.body;
 
-    if (!url || typeof url !== 'string') {
+    if (!url || typeof url !== 'string' || !url.trim()) {
       res.status(400).json({ error: 'Valid URL is required' });
       return;
     }
@@ -75,7 +76,18 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
       checkedDomain = cleanUrl.replace(/^https?:\/\//, '').split('/')[0];
     }
 
-    // Get verified official brand assets
+    // Get company details & registered official brand assets
+    let companyName = 'AcmePay Technologies';
+    let companyWebsite = 'https://acmepay.com';
+    const compStmt = db.prepare('SELECT name, website FROM companies WHERE id = ?');
+    compStmt.bind([companyId]);
+    if (compStmt.step()) {
+      const crow = compStmt.getAsObject() as any;
+      if (crow.name) companyName = crow.name;
+      if (crow.website) companyWebsite = crow.website;
+    }
+    compStmt.free();
+
     const assetStmt = db.prepare(`
       SELECT url, account_id, platform, type, name FROM brand_assets
       WHERE company_id = ? AND verification_status = 'verified_official' AND archived = 0
@@ -97,18 +109,7 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
     }
     assetStmt.free();
 
-    const officialDomain = officialDomains[0] || 'acmepay.com';
-
-    // Evaluation logic
-    let verdict: 'Approved' | 'Suspicious' | 'Likely phishing' | 'Confirmed malicious' = 'Approved';
-    let riskSeverity: 'critical' | 'high' | 'medium' | 'low' = 'low';
-    let riskScore = 4;
-    let confidence: 'High' | 'Medium' | 'Low' = 'High';
-    let redirectInfo = 'None (Direct SSL 200 OK)';
-    let pageTitle = 'Verified Official Destination';
-    let screenshotLabel = 'Verified company portal';
-    let whyFlagged = 'Matches approved official company domain exactly. No threats detected.';
-    let recommendedAction = 'No action needed. Verified official company destination.';
+    let analysis: any = null;
 
     // Check if checking an Instagram profile live
     if (checkedDomain.includes('instagram.com')) {
@@ -118,92 +119,81 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
         const isOfficialHandle = officialSocialHandles.includes(cleanHandle);
 
         if (isOfficialHandle) {
-          verdict = 'Approved';
-          riskSeverity = 'low';
-          riskScore = 0;
-          confidence = 'High';
-          redirectInfo = 'Direct SSL (Meta Instagram Graph Server)';
-          pageTitle = liveIg.title;
-          screenshotLabel = liveIg.stats;
-          whyFlagged = `Matches your registered official Instagram account ${liveIg.handle}. Live Instagram telemetry confirms: ${liveIg.stats}.`;
-          recommendedAction = 'Safe official account. Verified via Meta OAuth & live telemetry.';
+          analysis = {
+            url: cleanUrl,
+            checkedDomain,
+            officialDomain: 'instagram.com',
+            isTrueBrand: true,
+            verdictBoolean: 'TRUE',
+            verdict: 'Approved',
+            riskSeverity: 'low',
+            riskScore: 0,
+            confidence: 'High',
+            detectedBrand: 'Instagram (Meta)',
+            brandCategory: 'Social Media & Official Perimeter',
+            threatClassification: 'Verified Official Account Identity',
+            redirectInfo: 'Direct SSL (Meta Instagram Graph Server)',
+            pageTitle: liveIg.title,
+            screenshotLabel: liveIg.stats,
+            whyFlagged: `TRUE (AUTHENTIC OFFICIAL ACCOUNT): Matches your registered official Instagram account ${liveIg.handle}. Live Instagram telemetry confirms: ${liveIg.stats}.`,
+            recommendedAction: 'Safe official account. Verified via Meta OAuth & live telemetry.',
+            webRiskStatus: 'Clean (Meta Authorized Host)',
+          };
         } else if (!liveIg.exists) {
-          verdict = 'Suspicious';
-          riskSeverity = 'low';
-          riskScore = 20;
-          confidence = 'High';
-          redirectInfo = 'HTTP 404 (Handle Not Found)';
-          pageTitle = liveIg.title;
-          screenshotLabel = liveIg.stats;
-          whyFlagged = `Live Instagram query: ${liveIg.handle} does not exist on Instagram servers. May be an inactive link or deleted profile.`;
-          recommendedAction = 'No active threat. Account does not currently exist.';
+          analysis = {
+            url: cleanUrl,
+            checkedDomain,
+            officialDomain: 'instagram.com',
+            isTrueBrand: false,
+            verdictBoolean: 'FALSE',
+            verdict: 'Suspicious',
+            riskSeverity: 'low',
+            riskScore: 20,
+            confidence: 'High',
+            detectedBrand: 'Instagram (Meta)',
+            brandCategory: 'Social Media',
+            threatClassification: 'Inactive / Deleted Handle',
+            redirectInfo: 'HTTP 404 (Handle Not Found)',
+            pageTitle: liveIg.title,
+            screenshotLabel: liveIg.stats,
+            whyFlagged: `FALSE (DELETED / INACTIVE ACCOUNT): Live Instagram query confirms ${liveIg.handle} does not exist on Instagram servers. May be an inactive link or deleted profile.`,
+            recommendedAction: 'No active threat. Account does not currently exist.',
+            webRiskStatus: 'Meta 404 Response',
+          };
         } else {
-          verdict = 'Suspicious';
-          riskSeverity = 'medium';
-          riskScore = 65;
-          confidence = 'High';
-          redirectInfo = 'Direct SSL (Public Instagram Profile)';
-          pageTitle = liveIg.title;
-          screenshotLabel = liveIg.stats;
-          whyFlagged = `Live Instagram profile detected: ${liveIg.title}. Public stats: ${liveIg.stats}. Unverified third-party account not registered in official brand assets.`;
-          recommendedAction = 'Audit profile content if attempting to claim official brand affiliation.';
+          analysis = {
+            url: cleanUrl,
+            checkedDomain,
+            officialDomain: 'instagram.com',
+            isTrueBrand: false,
+            verdictBoolean: 'FALSE',
+            verdict: 'Suspicious',
+            riskSeverity: 'medium',
+            riskScore: 65,
+            confidence: 'High',
+            detectedBrand: 'Instagram (Meta)',
+            brandCategory: 'Social Media',
+            threatClassification: 'Unverified Third-Party Profile',
+            redirectInfo: 'Direct SSL (Public Instagram Profile)',
+            pageTitle: liveIg.title,
+            screenshotLabel: liveIg.stats,
+            whyFlagged: `FALSE (UNVERIFIED THIRD-PARTY ACCOUNT): Live Instagram profile detected: ${liveIg.title} (${liveIg.stats}). This account is NOT registered in your official brand assets and may represent an unapproved impersonator or community fan page.`,
+            recommendedAction: 'Audit profile content if attempting to claim official brand affiliation or requesting customer credentials.',
+            webRiskStatus: 'Public Instagram Profile',
+          };
         }
-      }
-    } else {
-      const isOfficial = officialDomains.some(
-        (od) => checkedDomain.toLowerCase() === od || checkedDomain.toLowerCase().endsWith('.' + od)
-      );
-
-      if (isOfficial) {
-        verdict = 'Approved';
-        riskSeverity = 'low';
-        riskScore = 4;
-        confidence = 'High';
-        whyFlagged = `Matches verified company domain ${officialDomain} exactly. No unauthorized redirects or brand impersonations detected.`;
-        recommendedAction = 'Safe to browse. This is a verified official brand domain.';
-      } else {
-      const isLookalike =
-        checkedDomain.includes('acme') ||
-        checkedDomain.includes('pay') ||
-        checkedDomain.includes('support') ||
-        checkedDomain.includes('verify') ||
-        checkedDomain.includes('login');
-
-      if (isLookalike) {
-        if (checkedDomain.includes('login') || checkedDomain.includes('verify') || cleanUrl.includes('login')) {
-          verdict = 'Likely phishing';
-          riskSeverity = 'high';
-          riskScore = 88;
-          confidence = 'High';
-          redirectInfo = 'HTTP 302 -> /login/credential-harvest';
-          pageTitle = 'AcmePay Customer Verification Portal';
-          screenshotLabel = 'Deceptive login form requesting card number and PIN';
-          whyFlagged = `High risk: Domain "${checkedDomain}" resembles official brand ${officialDomain}, but is not an approved company domain. It uses company branding and solicits sensitive login credentials.`;
-          recommendedAction = 'Submit immediate registrar takedown and alert security operations.';
-        } else {
-          verdict = 'Suspicious';
-          riskSeverity = 'medium';
-          riskScore = 65;
-          confidence = 'Medium';
-          redirectInfo = 'HTTP 301 -> /gateway';
-          pageTitle = 'Payment Gateway Referral';
-          screenshotLabel = 'Unverified marketing portal';
-          whyFlagged = `Medium risk: Domain "${checkedDomain}" contains brand keywords but is hosted on an unverified nameserver.`;
-          recommendedAction = 'Monitor domain registration changes and review traffic logs.';
-        }
-      } else {
-        verdict = 'Suspicious';
-        riskSeverity = 'medium';
-        riskScore = 48;
-        confidence = 'Low';
-        redirectInfo = 'Direct SSL';
-        pageTitle = 'Generic Landing Page';
-        screenshotLabel = 'Standard unverified website';
-        whyFlagged = `Unrecognized domain not affiliated with ${officialDomain}.`;
-        recommendedAction = 'Review link source and exercise standard caution.';
       }
     }
-  }
+
+    // If not Instagram or if live crawler didn't return, run Universal Verification Engine
+    if (!analysis) {
+      analysis = await verifyUniversalLink(cleanUrl, {
+        name: companyName,
+        website: companyWebsite,
+        officialDomains,
+        socialHandles: officialSocialHandles,
+      });
+    }
 
     const id = 'chk-' + Math.random().toString(36).substring(2, 9);
     const now = new Date().toISOString();
@@ -211,24 +201,30 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
     db.run(
       `INSERT INTO link_checks (
         id, company_id, url, checked_domain, official_domain, verdict, risk_severity, risk_score,
-        confidence, redirect_info, page_title, screenshot_label, why_flagged, recommended_action, checked_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        confidence, redirect_info, page_title, screenshot_label, why_flagged, recommended_action, checked_at,
+        is_true_brand, verdict_boolean, detected_brand, threat_classification, web_risk_status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         companyId,
-        cleanUrl,
-        checkedDomain,
-        officialDomain,
-        verdict,
-        riskSeverity,
-        riskScore,
-        confidence,
-        redirectInfo,
-        pageTitle,
-        screenshotLabel,
-        whyFlagged,
-        recommendedAction,
+        analysis.url,
+        analysis.checkedDomain,
+        analysis.officialDomain,
+        analysis.verdict,
+        analysis.riskSeverity,
+        analysis.riskScore,
+        analysis.confidence,
+        analysis.redirectInfo,
+        analysis.pageTitle,
+        analysis.screenshotLabel,
+        analysis.whyFlagged,
+        analysis.recommendedAction,
         'Just now',
+        analysis.isTrueBrand ? 1 : 0,
+        analysis.verdictBoolean,
+        analysis.detectedBrand,
+        analysis.threatClassification,
+        analysis.webRiskStatus || 'Clean',
       ]
     );
 
@@ -236,19 +232,25 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
 
     res.status(201).json({
       id,
-      url: cleanUrl,
-      checkedDomain,
-      officialDomain,
-      verdict,
-      riskSeverity,
-      riskScore,
-      confidence,
-      redirectInfo,
-      pageTitle,
-      screenshotLabel,
-      whyFlagged,
-      recommendedAction,
+      url: analysis.url,
+      checkedDomain: analysis.checkedDomain,
+      officialDomain: analysis.officialDomain,
+      verdict: analysis.verdict,
+      riskSeverity: analysis.riskSeverity,
+      riskScore: analysis.riskScore,
+      confidence: analysis.confidence,
+      redirectInfo: analysis.redirectInfo,
+      pageTitle: analysis.pageTitle,
+      screenshotLabel: analysis.screenshotLabel,
+      whyFlagged: analysis.whyFlagged,
+      recommendedAction: analysis.recommendedAction,
       checkedAt: 'Just now',
+      isTrueBrand: analysis.isTrueBrand,
+      verdictBoolean: analysis.verdictBoolean,
+      detectedBrand: analysis.detectedBrand,
+      brandCategory: analysis.brandCategory,
+      threatClassification: analysis.threatClassification,
+      webRiskStatus: analysis.webRiskStatus,
     });
   } catch (error) {
     console.error('Link check error:', error);
@@ -257,14 +259,15 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
 });
 
 // GET /api/link-checks
-router.get('/', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/', optionalAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const db = await getDb();
-    const companyId = (req.query.companyId as string) || req.user!.companyId;
+    const companyId = req.user?.companyId || (req.query.companyId as string) || 'comp-acmepay';
 
     const stmt = db.prepare(`
       SELECT id, url, checked_domain, official_domain, verdict, risk_severity, risk_score,
-             confidence, redirect_info, page_title, screenshot_label, why_flagged, recommended_action, checked_at
+             confidence, redirect_info, page_title, screenshot_label, why_flagged, recommended_action, checked_at,
+             is_true_brand, verdict_boolean, detected_brand, threat_classification, web_risk_status
       FROM link_checks
       WHERE company_id = ?
       ORDER BY rowid DESC
@@ -290,6 +293,11 @@ router.get('/', authMiddleware, async (req: AuthenticatedRequest, res: Response)
         whyFlagged: row.why_flagged,
         recommendedAction: row.recommended_action,
         checkedAt: row.checked_at,
+        isTrueBrand: row.is_true_brand === 1,
+        verdictBoolean: row.verdict_boolean || (row.verdict === 'Approved' ? 'TRUE' : 'FALSE'),
+        detectedBrand: row.detected_brand || 'General Domain',
+        threatClassification: row.threat_classification || 'Domain Check',
+        webRiskStatus: row.web_risk_status,
       });
     }
     stmt.free();

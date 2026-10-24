@@ -15,6 +15,7 @@ import {
   Sliders,
   ChevronDown
 } from 'lucide-react';
+import { PlatformBadge } from '../components/common/PlatformBadge';
 
 export const AlertPreviewPage: React.FC = () => {
   const { findings, setSelectedFinding, showToast, brandProfile, company } = useBrandGuard();
@@ -58,7 +59,7 @@ export const AlertPreviewPage: React.FC = () => {
         blocks: [
           {
             type: 'header',
-            text: { type: 'plain_text', text: `🚨 AEGIS Incident Alert: ${currentFinding.title}` },
+            text: { type: 'plain_text', text: `🚨 BrandGuard Incident Alert: ${currentFinding.title}` },
           },
           {
             type: 'section',
@@ -104,19 +105,19 @@ export const AlertPreviewPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="p-6 sm:p-7 rounded-3xl unlumen-card border border-purple-500/25 shadow-2xl space-y-3 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-purple-400/30 to-transparent pointer-events-none" />
+      <div className="p-6 sm:p-7 rounded-3xl unlumen-card border border-[#00FFA3]/30 shadow-2xl space-y-3 relative overflow-hidden bg-[#020713]/90">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#00FFA3]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#00FFA3]/50 to-transparent pointer-events-none" />
 
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="p-2 rounded-xl bg-purple-950/70 text-purple-400 border border-purple-500/40 shadow-sm">
+            <span className="p-2 rounded-xl bg-[#00FFA3]/10 text-[#00FFA3] border border-[#00FFA3]/30 shadow-[0_0_15px_rgba(0, 255, 163,0.2)]">
               <Bell className="w-5 h-5" />
             </span>
             <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
               Slack & Microsoft Teams Incident Alert Preview
             </h1>
-            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-950/60 text-amber-300 border border-amber-500/30 uppercase tracking-wider">
+            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#00FFA3]/10 text-[#00FFA3] border border-[#00FFA3]/30 uppercase tracking-wider">
               [WEBHOOK_SIMULATION]
             </span>
           </div>
@@ -124,9 +125,9 @@ export const AlertPreviewPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyPayload}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-white text-xs font-semibold border border-slate-700/80 transition-all shadow-sm btn-smooth"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#00050B] hover:bg-[#020713] text-white text-xs font-semibold border border-[#00FFA3]/20 transition-all shadow-sm"
             >
-              {copiedPayload ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-cyan-400" />}
+              {copiedPayload ? <Check className="w-3.5 h-3.5 text-[#00FFA3]" /> : <Copy className="w-3.5 h-3.5 text-[#00FFA3]" />}
               <span>{copiedPayload ? 'Copied Payload!' : 'Copy Alert Payload'}</span>
             </button>
           </div>
@@ -144,7 +145,7 @@ export const AlertPreviewPage: React.FC = () => {
       </div>
 
       {/* Control Bar: Finding Selector & Platform Toggles */}
-      <div className="p-4 sm:p-5 rounded-2xl unlumen-card border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-3 shadow-lg">
+      <div className="p-4 sm:p-5 rounded-2xl unlumen-card border border-[#00FFA3]/15 flex flex-col md:flex-row items-center justify-between gap-3 shadow-lg bg-[#020713]/80">
         {/* Finding Selector Dropdown */}
         <div className="flex items-center gap-2 w-full md:w-auto">
           <span className="text-xs font-semibold text-slate-400 font-mono uppercase tracking-wider flex-shrink-0">
@@ -154,7 +155,7 @@ export const AlertPreviewPage: React.FC = () => {
             <select
               value={selectedFindingId}
               onChange={(e) => setSelectedFindingId(e.target.value)}
-              className="w-full appearance-none bg-slate-950/90 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-400 pr-8 shadow-inner"
+              className="w-full appearance-none bg-[#00050B] border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#00FFA3] pr-8 shadow-inner"
             >
               {findings.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -167,12 +168,12 @@ export const AlertPreviewPage: React.FC = () => {
         </div>
 
         {/* Platform Toggle Buttons */}
-        <div className="flex items-center gap-1.5 self-start md:self-auto bg-slate-950/90 p-1.5 rounded-xl border border-slate-800/80 shadow-inner">
+        <div className="flex items-center gap-1.5 self-start md:self-auto bg-[#00050B] p-1.5 rounded-xl border border-slate-800/80 shadow-inner">
           <button
             onClick={() => setActivePlatform('slack')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all btn-smooth ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activePlatform === 'slack'
-                ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                ? 'bg-[#00FFA3] text-black font-bold shadow-[0_0_15px_rgba(0, 255, 163,0.3)]'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -180,9 +181,9 @@ export const AlertPreviewPage: React.FC = () => {
           </button>
           <button
             onClick={() => setActivePlatform('teams')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all btn-smooth ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activePlatform === 'teams'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                ? 'bg-[#00E5FF] text-black font-bold shadow-[0_0_15px_rgba(0,229,255,0.3)]'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -203,12 +204,12 @@ export const AlertPreviewPage: React.FC = () => {
 
           {/* Bot Profile */}
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-lg bg-violet-600 text-white flex items-center justify-center font-black text-xs flex-shrink-0">
-              AE
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-[#00FFA3] to-[#00E5FF] text-black flex items-center justify-center font-black text-xs flex-shrink-0 shadow-[0_0_10px_rgba(0, 255, 163,0.3)]">
+              BG
             </div>
             <div className="flex-1 space-y-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-white text-sm">AEGIS Bot</span>
+                <span className="font-bold text-white text-sm">BrandGuard Bot</span>
                 <span className="px-1 py-0.2 rounded bg-slate-700 text-[10px] text-slate-300 font-medium">APP</span>
                 <span className="text-xs text-slate-400">Just now</span>
               </div>
@@ -226,8 +227,8 @@ export const AlertPreviewPage: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3 text-xs pt-1 border-t border-slate-800">
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Platform</span>
-                    <span className="text-white font-medium">{currentFinding.platform}</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Platform</span>
+                    <PlatformBadge platform={currentFinding.platform} size="xs" />
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Risk Score</span>
@@ -294,10 +295,10 @@ export const AlertPreviewPage: React.FC = () => {
             <div className="flex items-center justify-between border-b border-slate-700 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-md bg-[#6264A7] text-white flex items-center justify-center font-bold text-xs">
-                  AE
+                  BG
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white">AEGIS Connector</h4>
+                  <h4 className="text-sm font-bold text-white">BrandGuard Connector</h4>
                   <span className="text-[10px] text-slate-400">Automated Webhook &bull; {currentFinding.detectedTime}</span>
                 </div>
               </div>
@@ -318,8 +319,8 @@ export const AlertPreviewPage: React.FC = () => {
             {/* Teams Metadata Table */}
             <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-[#201F1F] border border-slate-700 text-xs">
               <div>
-                <span className="text-[10px] text-slate-400 block">Host Platform</span>
-                <span className="font-semibold text-white">{currentFinding.platform}</span>
+                <span className="text-[10px] text-slate-400 block mb-1">Host Platform</span>
+                <PlatformBadge platform={currentFinding.platform} size="xs" />
               </div>
               <div>
                 <span className="text-[10px] text-slate-400 block">Calculated Risk</span>
@@ -341,7 +342,7 @@ export const AlertPreviewPage: React.FC = () => {
                 onClick={() => setSelectedFinding(currentFinding)}
                 className="px-4 py-2 rounded-lg bg-[#5B5FC7] hover:bg-[#4F52B2] text-white text-xs font-bold transition-colors shadow-sm"
               >
-                Review in AEGIS
+                Review in BrandGuard
               </button>
               <button
                 onClick={() => showToast('Opening evidence link in new tab (simulation)', 'info')}

@@ -22,42 +22,42 @@ export const OfficialAssetsChart: React.FC<OfficialAssetsChartProps> = ({
       label: 'Verified',
       count: verifiedCount,
       pct: verifiedPct,
-      color: '#10b981', // green
-      badgeColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+      color: '#00FFA3', // electric cyan HUD
+      badgeColor: 'bg-[#00FFA3]/15 text-[#00FFA3] border-[#00FFA3]/30',
       icon: ShieldCheck,
     },
     {
       label: 'Pending verification',
       count: pendingCount,
       pct: pendingPct,
-      color: '#eab308', // yellow
-      badgeColor: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+      color: '#00E5FF', // sky azure
+      badgeColor: 'bg-[#00E5FF]/15 text-[#00E5FF] border-[#00E5FF]/30',
       icon: Clock,
     },
     {
       label: 'Needs update',
       count: needsUpdateCount,
       pct: needsUpdatePct,
-      color: '#94a3b8', // blue/gray
+      color: '#64748b', // slate
       badgeColor: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
       icon: AlertCircle,
     },
   ];
 
   return (
-    <div className="p-4 rounded-xl bg-[#0D1425] border border-[#24324D] hover:border-[#8050FF]/40 transition-colors flex flex-col justify-between">
+    <div className="p-4 rounded-xl bg-[#040C1D] border border-[#00FFA3]/20 hover:border-[#00FFA3]/50 transition-colors flex flex-col justify-between shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-xs font-bold text-white tracking-tight">Official assets</h4>
-        <span className="text-[10px] text-emerald-400 font-mono font-semibold">
+        <span className="text-[10px] text-[#00FFA3] font-mono font-semibold">
           {verifiedCount} of {total} Verified
         </span>
       </div>
 
       {/* Segmented Horizontal Stacked Bar */}
       <div className="my-2">
-        <div className="w-full h-3 bg-navy-950 rounded-full overflow-hidden flex p-0.5 border border-slate-800 mb-3">
+        <div className="w-full h-3 bg-[#00050B] rounded-full overflow-hidden flex p-0.5 border border-[#00FFA3]/20 mb-3">
           <div
-            className="h-full bg-emerald-500 rounded-l-full transition-all duration-500"
+            className="h-full bg-[#00FFA3] rounded-l-full transition-all duration-500 shadow-[0_0_8px_rgba(0, 255, 163,0.4)]"
             style={{ width: `${verifiedPct}%` }}
             title={`Verified: ${verifiedCount} (${verifiedPct}%)`}
           />

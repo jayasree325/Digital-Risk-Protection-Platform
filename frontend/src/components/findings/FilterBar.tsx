@@ -49,18 +49,18 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     (filters.source && filters.source !== 'all');
 
   return (
-    <div className="p-4 rounded-2xl unlumen-card border border-cyan-500/25 space-y-3 text-xs font-sans shadow-lg">
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+    <div className="p-4 rounded-2xl bg-[#00050B]/90 border border-[#00FFA3]/25 space-y-3 text-xs font-mono shadow-xl cyber-corners">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#00FFA3]/15">
         <div className="flex items-center gap-2 text-white font-bold">
-          <Filter className="w-4 h-4 text-cyan-400" />
-          <span className="tracking-tight uppercase text-[11px] font-mono">[SOC THREAT FILTER MATRIX]</span>
+          <Filter className="w-4 h-4 text-[#00FFA3]" />
+          <span className="tracking-tight uppercase text-[11px] font-mono text-[#00FFA3]">[SOC THREAT FILTER MATRIX]</span>
         </div>
 
         <div className="flex items-center gap-2">
           {isFiltered && (
             <button
               onClick={onReset}
-              className="inline-flex items-center gap-1.5 text-[11px] font-mono text-cyan-400 hover:text-cyan-300 font-bold px-2.5 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 transition-all btn-smooth shadow-sm"
+              className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#00FFA3] hover:text-[#00E5FF] font-bold px-2.5 py-1 rounded-lg bg-[#00FFA3]/10 hover:bg-[#00FFA3]/20 border border-[#00FFA3]/30 transition-all btn-smooth shadow-sm hover:shadow-[0_0_12px_rgba(0,255,163,0.3)]"
             >
               <RotateCcw className="w-3 h-3" />
               <span>Clear Matrix</span>
@@ -73,13 +73,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         {/* Monitored Enterprise Filter */}
         <div className="flex items-center gap-1.5">
           <label className="text-slate-400 text-[11px] font-mono flex items-center gap-1">
-            <Building2 className="w-3.5 h-3.5 text-cyan-400" />
+            <Building2 className="w-3.5 h-3.5 text-[#00FFA3]" />
             <span>Target:</span>
           </label>
           <select
             value={selectedCompanyId}
             onChange={(e) => switchCompany(e.target.value)}
-            className="bg-slate-950 border border-cyan-500/40 rounded-xl px-2.5 py-1.5 text-cyan-300 text-xs font-bold focus:outline-none focus:border-cyan-400 cursor-pointer shadow-sm"
+            className="bg-[#040C1D] border border-[#00FFA3]/40 rounded-xl px-2.5 py-1.5 text-[#00FFA3] text-xs font-bold focus:outline-none focus:border-[#00FFA3] cursor-pointer shadow-sm hover:border-[#00FFA3]/70"
           >
             {availableCompanies.map((c) => (
               <option key={c.id} value={c.id}>
@@ -95,7 +95,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <select
             value={filters.severity}
             onChange={(e) => onFilterChange('severity', e.target.value)}
-            className="bg-slate-950 border border-slate-700/80 hover:border-slate-600 rounded-xl px-2.5 py-1.5 text-slate-200 text-xs font-semibold focus:outline-none focus:border-cyan-500 cursor-pointer transition-colors"
+            className="bg-[#040C1D] border border-[#00FFA3]/20 hover:border-[#00FFA3]/40 rounded-xl px-2.5 py-1.5 text-slate-200 text-xs font-semibold focus:outline-none focus:border-[#00FFA3] cursor-pointer transition-colors"
           >
             <option value="all">All Severities</option>
             <option value="critical">Critical Risk (90-100)</option>
@@ -108,16 +108,17 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         {/* Detection Source Filter (Live Sensor vs Heuristic Engine) */}
         <div className="flex items-center gap-1.5">
           <label className="text-slate-400 text-[11px] font-mono flex items-center gap-1">
-            <Cpu className="w-3.5 h-3.5 text-purple-400" />
+            <Cpu className="w-3.5 h-3.5 text-[#00FFA3]" />
             <span>Source:</span>
           </label>
           <select
             value={filters.source || 'all'}
             onChange={(e) => onFilterChange('source', e.target.value)}
-            className="bg-navy-950 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-slate-200 text-xs font-semibold focus:outline-none focus:border-cyan-500 cursor-pointer"
+            className="bg-[#040C1D] border border-[#00FFA3]/20 hover:border-[#00FFA3]/40 rounded-xl px-2.5 py-1.5 text-slate-200 text-xs font-semibold focus:outline-none focus:border-[#00FFA3] cursor-pointer"
           >
             <option value="all">All Detection Sources</option>
             <option value="live">Verified Live Sensor</option>
+            <option value="google">Google Search (Indexed)</option>
             <option value="simulated">Simulated Heuristic Lab</option>
           </select>
         </div>
@@ -128,7 +129,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <select
             value={filters.platform}
             onChange={(e) => onFilterChange('platform', e.target.value)}
-            className="bg-navy-950 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-slate-200 text-xs font-semibold focus:outline-none focus:border-cyan-500 cursor-pointer"
+            className="bg-[#040C1D] border border-[#00FFA3]/20 hover:border-[#00FFA3]/40 rounded-xl px-2.5 py-1.5 text-slate-200 text-xs font-semibold focus:outline-none focus:border-[#00FFA3] cursor-pointer"
           >
             <option value="all">All Platforms</option>
             <option value="Instagram">Instagram</option>
@@ -148,7 +149,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <select
             value={filters.confidence}
             onChange={(e) => onFilterChange('confidence', e.target.value)}
-            className="bg-navy-950 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-slate-200 text-xs font-semibold focus:outline-none focus:border-cyan-500 cursor-pointer"
+            className="bg-[#040C1D] border border-[#00FFA3]/20 hover:border-[#00FFA3]/40 rounded-xl px-2.5 py-1.5 text-slate-200 text-xs font-semibold focus:outline-none focus:border-[#00FFA3] cursor-pointer"
           >
             <option value="all">All Confidence</option>
             <option value="High">High Confidence (≥85%)</option>
@@ -163,7 +164,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <select
             value={filters.status}
             onChange={(e) => onFilterChange('status', e.target.value)}
-            className="bg-navy-950 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-slate-200 text-xs font-semibold focus:outline-none focus:border-cyan-500 cursor-pointer"
+            className="bg-[#040C1D] border border-[#00FFA3]/20 hover:border-[#00FFA3]/40 rounded-xl px-2.5 py-1.5 text-slate-200 text-xs font-semibold focus:outline-none focus:border-[#00FFA3] cursor-pointer"
           >
             <option value="all">All Statuses</option>
             <option value="New">New</option>

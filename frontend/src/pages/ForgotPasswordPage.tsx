@@ -28,7 +28,7 @@ export const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#040711] text-slate-100 flex flex-col justify-between selection:bg-cyan-500/30 haikei-mesh-bg relative overflow-hidden">
+    <div className="min-h-screen bg-[#00050B] text-slate-100 flex flex-col justify-between selection:bg-[#00FFA3]/30 relative overflow-hidden">
       {/* Background Cyber Ambient Overlays */}
       <div className="pointer-events-none fixed inset-0 cyber-grid-pattern opacity-25" />
 
@@ -38,12 +38,12 @@ export const ForgotPasswordPage: React.FC = () => {
           onClick={() => setViewMode('landing')}
           className="flex items-center gap-3 text-left group"
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:scale-105 transition-transform border border-violet-400/30">
-            <Shield className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00FFA3] to-[#00E5FF] flex items-center justify-center shadow-[0_0_20px_rgba(0, 255, 163,0.3)] group-hover:scale-105 transition-transform border border-[#00FFA3]/50">
+            <Shield className="w-5 h-5 text-black" />
           </div>
           <div>
-            <span className="font-bold text-xl block leading-tight text-white tracking-wider">AEGIS</span>
-            <span className="text-[10px] text-[#42DDF5] font-mono font-medium tracking-wider uppercase block">
+            <span className="font-bold text-xl block leading-tight text-white tracking-wider">BrandGuard</span>
+            <span className="text-[10px] text-[#00FFA3] font-mono font-medium tracking-wider uppercase block">
               Digital Risk Protection
             </span>
           </div>
@@ -60,13 +60,15 @@ export const ForgotPasswordPage: React.FC = () => {
 
       {/* Main card */}
       <main className="flex-1 flex items-center justify-center p-6 relative z-10">
-        <div className="w-full max-w-md border-beam-container">
-          <div className="border-beam-glow opacity-80" />
-
-          <SpotlightCard className="p-8 shadow-2xl relative" showCornerAccents={true}>
+        <div className="w-full max-w-md">
+          <SpotlightCard 
+            enable3DTilt={false}
+            className="p-8 shadow-2xl relative bg-[#020713]/95 border border-[#00FFA3]/30" 
+            showCornerAccents={true}
+          >
             <div className="mb-7 text-center">
-              <div className="inline-flex p-3 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 mb-3 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
-                <KeyRound className="w-6 h-6 text-cyan-400" />
+              <div className="inline-flex p-3 rounded-2xl bg-[#00FFA3]/10 border border-[#00FFA3]/30 text-[#00FFA3] mb-3 shadow-[0_0_15px_rgba(0, 255, 163,0.2)]">
+                <KeyRound className="w-6 h-6 text-[#00FFA3]" />
               </div>
               <h1 className="text-2xl font-bold text-white tracking-tight mb-1.5 font-display-3d">
                 Credential Recovery
@@ -85,7 +87,7 @@ export const ForgotPasswordPage: React.FC = () => {
 
             {successMessage ? (
               <div className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-3">
-                <CheckCircle2 className="w-9 h-9 text-emerald-400 mx-auto" />
+                <CheckCircle2 className="w-9 h-9 text-[#00FFA3] mx-auto" />
                 <h3 className="text-sm font-bold text-white font-mono">DISPATCH CONFIRMED</h3>
                 <p className="text-xs text-slate-300 leading-relaxed font-mono">
                   {successMessage}
@@ -93,7 +95,7 @@ export const ForgotPasswordPage: React.FC = () => {
                 <div className="pt-2">
                   <button
                     onClick={() => setViewMode('login')}
-                    className="px-5 py-2.5 rounded-xl btn-smooth btn-smooth-dark text-xs font-semibold text-white"
+                    className="px-5 py-2.5 rounded-xl bg-[#00050B] hover:bg-[#020713] border border-[#00FFA3]/30 text-xs font-semibold text-[#00FFA3]"
                   >
                     Return to Sign in
                   </button>
@@ -113,7 +115,7 @@ export const ForgotPasswordPage: React.FC = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="name@company.com"
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700/80 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 transition-all font-mono"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#00050B] border border-slate-700/80 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3]/50 transition-all font-mono"
                     />
                   </div>
                 </div>
@@ -121,11 +123,11 @@ export const ForgotPasswordPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full mt-3 py-3 rounded-xl btn-smooth btn-smooth-cyan text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/25 disabled:opacity-50"
+                  className="w-full mt-3 py-3 rounded-xl bg-gradient-to-r from-[#00FFA3] via-[#00E5FF] to-[#00E5FF] text-black text-xs font-bold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0, 255, 163,0.3)] hover:opacity-95 transition-opacity disabled:opacity-50"
                 >
                   {isLoading ? (
                     <>
-                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span className="w-3.5 h-3.5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                       <span>Sending instructions...</span>
                     </>
                   ) : (
@@ -139,7 +141,7 @@ export const ForgotPasswordPage: React.FC = () => {
               <span>Remembered your password? </span>
               <button
                 onClick={() => setViewMode('login')}
-                className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors"
+                className="text-[#00FFA3] hover:text-[#00E5FF] font-semibold transition-colors"
               >
                 Sign in
               </button>
@@ -149,7 +151,7 @@ export const ForgotPasswordPage: React.FC = () => {
       </main>
 
       <footer className="py-6 text-center text-[11px] font-mono text-slate-500 relative z-10">
-        AEGIS Security Cloud &bull; Encrypted Token Handshake
+        BrandGuard Security Cloud &bull; Encrypted Token Handshake
       </footer>
     </div>
   );

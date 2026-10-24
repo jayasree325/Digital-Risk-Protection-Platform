@@ -14,6 +14,7 @@ import {
   Radio
 } from 'lucide-react';
 import { Finding } from '../../types';
+import { PlatformBadge, PlatformLogo } from '../common/PlatformBadge';
 
 export const LiveThreatStream: React.FC = () => {
   const { 
@@ -31,8 +32,8 @@ export const LiveThreatStream: React.FC = () => {
     .slice(0, 5);
 
   const getPlatformIcon = (platform: string, type: string) => {
-    if (type === 'app') return <Smartphone className="w-3.5 h-3.5 text-purple-400" />;
-    return <Share2 className="w-3.5 h-3.5 text-cyan-400" />;
+    if (type === 'app') return <Smartphone className="w-3.5 h-3.5 text-[#00E5FF]" />;
+    return <Share2 className="w-3.5 h-3.5 text-[#00FFA3]" />;
   };
 
   const getSeverityBadge = (severity: string) => {
@@ -60,9 +61,10 @@ export const LiveThreatStream: React.FC = () => {
   };
 
   return (
-    <div className="rounded-2xl unlumen-card border border-cyan-500/25 overflow-hidden shadow-xl">
+    <div className="rounded-2xl bg-[#020713]/85 backdrop-blur-2xl border border-[#00FFA3]/20 overflow-hidden shadow-2xl relative">
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#00FFA3]/40 to-transparent pointer-events-none" />
       {/* Stream Header */}
-      <div className="px-5 py-3.5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/70">
+      <div className="px-5 py-3.5 border-b border-[#00FFA3]/15 flex items-center justify-between bg-[#00050B]/80 backdrop-blur-md">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 shadow-sm">
             <Flame className="w-4 h-4" />
@@ -83,7 +85,7 @@ export const LiveThreatStream: React.FC = () => {
 
         <button
           onClick={() => setActivePage('findings')}
-          className="text-[11px] font-mono font-bold text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1 btn-smooth"
+          className="text-[11px] font-mono font-bold text-[#00FFA3] hover:text-[#00E5FF] transition-colors flex items-center gap-1"
         >
           <span>All Findings ({findings.length})</span>
           <ChevronRight className="w-3.5 h-3.5" />
@@ -91,7 +93,7 @@ export const LiveThreatStream: React.FC = () => {
       </div>
 
       {/* Threat List */}
-      <div className="divide-y divide-slate-800/60">
+      <div className="divide-y divide-[#00FFA3]/10">
         {streamFindings.length === 0 ? (
           <div className="p-8 text-center text-slate-400 font-mono text-xs">
             No active threat alerts detected for this brand perimeter.
@@ -101,23 +103,21 @@ export const LiveThreatStream: React.FC = () => {
             <div
               key={finding.id}
               onClick={() => setSelectedFinding(finding)}
-              className="p-4 hover:bg-slate-900/50 transition-all cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+              className="p-4 hover:bg-[#00050B]/60 transition-all cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
             >
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center flex-shrink-0 group-hover:border-cyan-500/50 group-hover:scale-105 transition-all mt-0.5 shadow-sm">
-                  {getPlatformIcon(finding.platform, finding.type)}
+                <div className="w-8 h-8 rounded-xl bg-[#00050B] border border-slate-800 flex items-center justify-center flex-shrink-0 group-hover:border-[#00FFA3]/50 group-hover:scale-105 transition-all mt-0.5 shadow-sm p-1.5">
+                  <PlatformLogo platform={finding.platform} size="md" />
                 </div>
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold text-white group-hover:text-cyan-300 transition-colors">
+                    <span className="font-bold text-white group-hover:text-[#00FFA3] transition-colors">
                       {finding.title}
                     </span>
                     {getSeverityBadge(finding.riskSeverity)}
-                    <span className="text-[10px] font-mono text-slate-400 px-1.5 py-0.5 rounded bg-slate-800/80 border border-slate-700/50">
-                      {finding.platform}
-                    </span>
-                    <span className="text-[10px] font-mono text-cyan-400">
+                    <PlatformBadge platform={finding.platform} size="xs" />
+                    <span className="text-[10px] font-mono text-[#00FFA3]">
                       Score: {finding.riskScore}/100
                     </span>
                   </div>
@@ -146,10 +146,10 @@ export const LiveThreatStream: React.FC = () => {
               <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
                 <button
                   type="button"
-                  className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-slate-950 hover:bg-slate-900 text-cyan-300 border border-cyan-500/40 hover:border-cyan-400 transition-all flex items-center gap-1 shadow-sm btn-smooth"
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[#00050B] hover:bg-[#020713] text-[#00FFA3] border border-[#00FFA3]/40 hover:border-[#00FFA3] transition-all flex items-center gap-1 shadow-sm"
                 >
                   <span>Investigate</span>
-                  <ExternalLink className="w-3 h-3 text-cyan-400" />
+                  <ExternalLink className="w-3 h-3 text-[#00FFA3]" />
                 </button>
               </div>
             </div>

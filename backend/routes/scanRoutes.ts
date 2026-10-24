@@ -2,7 +2,162 @@ import { Router, Response } from 'express';
 import { getDb, saveDb } from '../db';
 import { authMiddleware, AuthenticatedRequest } from '../auth';
 
+import { getGoogleDiscoveryStatus, executeGoogleDiscovery } from '../services/googleDiscoveryService';
+
 const router = Router();
+
+// GET /api/scans/google/status - Safe status check (never leaks credentials)
+router.get('/google/status', authMiddleware, async (_req: AuthenticatedRequest, res: Response) => {
+  const status = getGoogleDiscoveryStatus();
+  res.json({
+    configured: status.searchConfigured,
+    searchEngineIdConfigured: status.searchEngineIdConfigured,
+    webRiskConfigured: status.webRiskConfigured,
+    discoverySource: 'Google Search',
+    status: status.status,
+    sourceStatus: status.sourceStatus,
+    notice: status.message,
+    isLiveAvailable: status.searchConfigured && status.searchEngineIdConfigured,
+  });
+});
+
+// POST /api/scans/google - Run Google public index discovery and Web Risk evaluation
+router.post('/google', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const db = await getDb();
+    const companyId = (req.body.companyId as string) || (req.query.companyId as string) || req.user!.companyId;
+
+    // Fetch company info
+    const cStmt = db.prepare('SELECT id, name, website FROM companies WHERE id = ?');
+    cStmt.bind([companyId]);
+    let companyName = 'AcmePay';
+    let companyWebsite = 'https://acmepay.com';
+    if (cStmt.step()) {
+      const cObj = cStmt.getAsObject() as any;
+      companyName = cObj.name || 'AcmePay';
+      companyWebsite = cObj.website || 'https://acmepay.com';
+    }
+    cStmt.free();
+
+    // Fetch official assets for comparison parity
+    const aStmt = db.prepare('SELECT type, url, account_id, package_id FROM brand_assets WHERE company_id = ?');
+    aStmt.bind([companyId]);
+    const officialDomains: string[] = [];
+    const officialSocialUrls: string[] = [];
+    const officialUsernames: string[] = [];
+
+    try {
+      const parsedWebsite = new URL(companyWebsite);
+      officialDomains.push(parsedWebsite.hostname);
+    } catch {}
+
+    while (aStmt.step()) {
+      const asset = aStmt.getAsObject() as any;
+      if (asset.type === 'domain' && asset.url) {
+        try {
+          officialDomains.push(new URL(asset.url).hostname);
+        } catch {
+          officialDomains.push(asset.url);
+        }
+      } else if (asset.type === 'social' && asset.url) {
+        officialSocialUrls.push(asset.url);
+        if (asset.account_id) officialUsernames.push(asset.account_id);
+      }
+    }
+    aStmt.free();
+
+    // Execute backend Google discovery
+    const discoveryResult = await executeGoogleDiscovery({
+      companyId,
+      brandName: companyName,
+      officialDomains,
+      officialSocialUrls,
+      officialUsernames,
+    });
+
+    const insertedFindingIds: string[] = [];
+
+    // Insert discovered candidate findings into database
+    for (const f of discoveryResult.findings) {
+      insertedFindingIds.push(f.id);
+
+      db.run(
+        `INSERT INTO findings (
+          id, company_id, type, reference_id, title, platform, username_or_package, candidate_url,
+          risk_severity, risk_score, confidence, status, main_reason, detailed_reason,
+          detected_time, first_seen, last_seen, publisher_or_owner, candidate_website, description,
+          avatar_color, avatar_initials, lookalike_data, is_demo, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          f.id,
+          f.companyId,
+          f.type,
+          f.referenceId,
+          f.title,
+          f.platform,
+          f.usernameOrPackage,
+          f.candidateUrl,
+          f.riskSeverity,
+          f.riskScore,
+          f.confidence,
+          f.status,
+          f.mainReason,
+          f.detailedReason,
+          f.detectedTime,
+          f.firstSeen,
+          f.lastSeen,
+          f.publisherOrOwner,
+          f.candidateWebsite,
+          f.description,
+          f.avatarColor,
+          f.avatarInitials,
+          JSON.stringify(f.lookalike),
+          f.isDemo,
+          f.firstSeen,
+          f.lastSeen,
+        ]
+      );
+
+      // Insert signals
+      for (const sig of f.signals) {
+        db.run(
+          `INSERT INTO finding_signals (id, finding_id, signal_type, title, explanation, strength, icon_name)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [sig.id, f.id, sig.signalType, sig.title, sig.explanation, sig.strength, sig.iconName]
+        );
+      }
+
+      // Insert evidence
+      db.run(
+        `INSERT INTO evidence (id, finding_id, type, url_or_path, timestamp, description, source, sha256_hash)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [f.evidence.id, f.id, f.evidence.type, f.evidence.urlOrPath, f.evidence.timestamp, f.evidence.description, f.evidence.source, f.evidence.sha256Hash]
+      );
+    }
+
+    if (discoveryResult.findings.length > 0) {
+      saveDb();
+    }
+
+    res.status(200).json({
+      message: discoveryResult.message,
+      sourceStatus: discoveryResult.sourceStatus,
+      status: discoveryResult.status,
+      findingsCount: discoveryResult.findings.length,
+      findingIds: insertedFindingIds,
+      notice: discoveryResult.message,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error executing Google discovery',
+      sourceStatus: 'Google Search unavailable',
+      status: 'error',
+      findingsCount: 0,
+      findingIds: [],
+    });
+  }
+});
+
 
 // GET /api/scans/instagram/status - Safe status check (never leaks token)
 router.get('/instagram/status', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {

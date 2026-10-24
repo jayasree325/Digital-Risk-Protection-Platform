@@ -84,6 +84,19 @@ export const api = {
     });
   },
 
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    return request<{ success: boolean; message: string }>('/api/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  },
+
+  async deleteAccount(): Promise<{ success: boolean; message: string }> {
+    return request<{ success: boolean; message: string }>('/api/auth/delete-account', {
+      method: 'POST',
+    });
+  },
+
   logout(): void {
     setStoredToken(null);
   },
@@ -236,6 +249,34 @@ export const api = {
     });
   },
 
+  async runGoogleScan(companyId?: string): Promise<{
+    message: string;
+    sourceStatus: string;
+    status: string;
+    findingsCount: number;
+    findingIds: string[];
+    notice: string;
+  }> {
+    return request('/api/scans/google', {
+      method: 'POST',
+      body: JSON.stringify({ companyId }),
+    });
+  },
+
+  async getGoogleDiscoveryStatus(): Promise<{
+    configured: boolean;
+    searchEngineIdConfigured: boolean;
+    webRiskConfigured: boolean;
+    discoverySource: string;
+    status: string;
+    sourceStatus: string;
+    notice: string;
+    isLiveAvailable: boolean;
+  }> {
+    return request('/api/scans/google/status');
+  },
+
+
   async getInstagramStatus(): Promise<{
     configured: boolean;
     platform: string;
@@ -291,6 +332,57 @@ export const api = {
     return request('/api/company/instagram/disconnect', {
       method: 'POST',
       body: JSON.stringify({ companyId }),
+    });
+  },
+
+  // AI Intelligence Endpoints (Powered by NVIDIA NIM)
+  async getAiStatus(): Promise<{
+    configured: boolean;
+    provider: string;
+    model: string;
+    mode: string;
+    notice: string;
+  }> {
+    return request('/api/ai/status');
+  },
+
+  async askAegisAI(query: string, context?: any): Promise<{
+    success: boolean;
+    query: string;
+    answer: string;
+    model: string;
+    provider: string;
+  }> {
+    return request('/api/ai/ask', {
+      method: 'POST',
+      body: JSON.stringify({ query, context }),
+    });
+  },
+
+  async analyzeScamScriptAI(text: string, companyName?: string): Promise<{
+    success: boolean;
+    analysis: {
+      scamScore: number;
+      confidence: 'High' | 'Medium' | 'Low';
+      threatVerdict: string;
+      urgencyLevel: string;
+      summary: string;
+      detectedTactics: Array<{
+        name: string;
+        severity: 'critical' | 'high' | 'medium';
+        weight: number;
+        matchedSnippet: string;
+        explanation: string;
+      }>;
+      redFlags: string[];
+      recommendedAction: string;
+    };
+    model: string;
+    provider: string;
+  }> {
+    return request('/api/ai/analyze-scam', {
+      method: 'POST',
+      body: JSON.stringify({ text, companyName }),
     });
   },
 };

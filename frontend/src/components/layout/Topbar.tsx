@@ -1,19 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBrandGuard } from '../../context/BrandGuardContext';
 import { 
   Bell, 
+  Search, 
   ChevronDown, 
-  Check, 
-  ExternalLink,
-  Shield, 
-  Activity,
+  Calendar, 
+  ShieldCheck, 
+  User, 
+  Sparkles,
   Bot,
-  Sparkles
+  ExternalLink,
+  Shield,
+  Layers,
+  Activity,
+  LogIn
 } from 'lucide-react';
-import { SourceStatusBadge } from '../common/SourceStatusBadge';
 import { AskBrandShieldModal } from '../assistant/AskBrandShieldModal';
+import { CommandPaletteModal } from '../common/CommandPaletteModal';
 
-export const Topbar: React.FC = () => {
+interface TopbarProps {
+  onToggleHud?: () => void;
+  isHudActive?: boolean;
+}
+
+export type UserRole = 'Admin' | 'SOC Analyst' | 'Legal / Compliance' | 'Executive Auditor';
+
+export const Topbar: React.FC<TopbarProps> = ({ onToggleHud, isHudActive }) => {
   const { 
     activePage, 
     searchQuery, 
@@ -29,285 +41,253 @@ export const Topbar: React.FC = () => {
     selectedCompanyId,
     switchCompany,
     isDemoMode,
-    isLoadingData,
+    isAuthenticated,
+    openAuthModal,
   } = useBrandGuard();
 
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const brandDropdownRef = React.useRef<HTMLDivElement>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [activeRole, setActiveRole] = useState<UserRole>('SOC Analyst');
 
-  React.useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (brandDropdownRef.current && !brandDropdownRef.current.contains(e.target as Node)) {
-        setIsBrandDropdownOpen(false);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
       }
     };
-    if (isBrandDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isBrandDropdownOpen]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const pageTitles: Record<string, string> = {
-    home: 'Home Dashboard',
-    'check-link': 'Check a Suspicious Link',
-    social: 'Social Profiles',
-    apps: 'Mobile Apps',
-    findings: 'All Risk Findings',
-    'scan-results': 'Scan Results & Staged Review',
-    'brand-profile': 'Official Brand Profile',
-    settings: 'Settings & Parameters',
-    watchlist: 'Pre-emptive Watchlist Generator',
+    home: 'Security Command Center',
+    'check-link': 'Link Verification Lab',
+    social: 'Social Threat Vectors',
+    apps: 'Mobile Rogue App Radar',
+    findings: 'Threat & Finding Matrix',
+    'scan-results': 'Staged Attack Radar',
+    'brand-profile': 'Digital Perimeter Profile',
+    settings: 'SOC System Parameters',
+    watchlist: 'Pre-emptive Watchlist',
     'scam-analyzer': 'Scam Script Analyzer',
-    'unicode-xray': 'Unicode X-Ray Laboratory',
-    'warning-kit': 'Customer Warning & Advisory Kit',
-    'board-report': 'Board-Ready Security Report',
-    'alert-preview': 'Slack & Teams Alert Preview',
+    'unicode-xray': 'Unicode Spoof Lab',
+    'warning-kit': 'Advisory Warning Kit',
+    'board-report': 'Executive Intelligence Report',
+    'alert-preview': 'Alert Dispatcher',
   };
 
-  const liveSourcesCount = sources.filter((s) => s.status === 'live' || s.status === 'partially_available').length;
-  const recentAlerts = findings.slice(0, 3);
+  const currentDateFormatted = 'Wed, 14 Aug 2026';
+  const recentAlerts = findings.slice(0, 4);
 
   return (
-    <header className="h-16 px-6 bg-[#070A14]/90 backdrop-blur-xl border-b border-[#24324D] flex items-center justify-between gap-4 sticky top-0 z-20 shadow-[0_4px_24px_rgba(0,0,0,0.6)]">
-      {/* Specular edge line */}
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#8050FF]/30 to-transparent pointer-events-none" />
-
-      {/* Left: Page Title with Retro indicator */}
-      <div className="flex items-center gap-3 min-w-[200px]">
-        <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded border border-[#8050FF]/40 bg-[#8050FF]/10 text-[10px] font-mono text-[#A17AFF]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#42DDF5] animate-pulse" />
-          <span>AEGIS_SOC</span>
-        </div>
-        <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-          {pageTitles[activePage] || 'AEGIS Dashboard'}
-        </h1>
-      </div>
-
-      {/* Center: Ask AEGIS assistant button */}
-      <div className="flex-1 max-w-lg flex items-center">
-        {/* Feature 10: Ask AEGIS compact assistant button with Magic UI border beam */}
-        <div className="relative group p-px rounded-xl overflow-hidden flex-shrink-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#8050FF] via-[#A17AFF] to-[#42DDF5] opacity-70 group-hover:opacity-100 transition-opacity blur-[1px]" />
-          <button
-            onClick={() => setIsAssistantOpen(true)}
-            className="relative flex items-center gap-1.5 px-3 py-2 rounded-[11px] bg-[#070A14] hover:bg-[#0D1425] text-white text-xs font-semibold shadow-md transition-all flex-shrink-0 group"
-            title="Ask AEGIS AI Search & Assistant"
-          >
-            <Bot className="w-4 h-4 text-[#42DDF5] group-hover:scale-110 transition-transform" />
-            <span className="hidden sm:inline bg-gradient-to-r from-[#A17AFF] to-[#42DDF5] bg-clip-text text-transparent font-bold">Ask AEGIS</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Right Actions */}
-      <div className="flex items-center gap-3">
-        {/* Source status indicator pill */}
-        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800/90 text-xs shadow-inner">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
-          <span className="text-slate-400 text-[11px] font-mono">SOURCES:</span>
-          <span className="text-cyan-300 font-semibold text-[11px] font-mono">
-            {liveSourcesCount}/{sources.length} LIVE
+    <header className="h-16 px-6 bg-[#00050B] border-b border-cyan-950/80 flex items-center justify-between gap-4 sticky top-0 z-20 shadow-[0_4px_30px_rgba(0,0,0,0.8)]">
+      {/* 1. Left: Brand Title & Active View */}
+      <div className="flex items-center gap-3 min-w-[220px]">
+        <div className="flex items-center gap-2">
+          <span className="text-sm sm:text-base font-bold text-white tracking-wide font-sans">
+            {pageTitles[activePage] || 'Security Command Center'}
           </span>
-          <div className="hidden xl:flex items-center gap-1.5 ml-2 border-l border-slate-800 pl-2">
-            {sources.map((src) => (
-              <SourceStatusBadge key={src.id} source={src} compact />
-            ))}
+          <span className="w-2 h-2 rounded-full bg-[#00FFA3] shadow-[0_0_8px_#00FFA3] animate-pulse" />
+        </div>
+      </div>
+
+      {/* 2. Center: Quick Search Bar & AI Analyst Button */}
+      <div className="flex-1 max-w-md hidden md:flex items-center gap-2">
+        <button
+          onClick={() => setIsCommandPaletteOpen(true)}
+          className="relative w-full flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-[#040C1D] border border-[#00FFA3]/20 hover:border-[#00FFA3]/50 text-xs text-slate-400 font-mono transition-all text-left shadow-inner group"
+        >
+          <div className="flex items-center gap-2 truncate">
+            <Search className="w-3.5 h-3.5 text-[#00FFA3] shrink-0" />
+            <span className="truncate group-hover:text-white transition-colors">Quick command / search threats...</span>
           </div>
+          <kbd className="px-1.5 py-0.5 rounded bg-[#060D1A] border border-[#00FFA3]/30 text-[10px] text-[#00FFA3] font-bold font-mono">
+            ⌘K
+          </kbd>
+        </button>
+
+        {/* AI Assistant Quick Trigger */}
+        <button
+          onClick={() => setIsAssistantOpen(true)}
+          className="px-3 py-1.5 rounded-xl bg-[#00FFA3]/10 hover:bg-[#00FFA3]/20 border border-[#00FFA3]/30 text-[#00FFA3] text-xs font-semibold flex items-center gap-1.5 transition-colors flex-shrink-0"
+          title="Open AI Threat Intelligence Analyst"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span className="hidden lg:inline text-[11px]">AI Analyst</span>
+        </button>
+      </div>
+
+      {/* 3. Right: Date Filter Pill, Notifications, Operator Profile */}
+      <div className="flex items-center gap-3">
+        {/* Date Filter Pill */}
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#040C1D] border border-cyan-950/90 text-xs text-slate-300 font-mono shadow-inner">
+          <Calendar className="w-3.5 h-3.5 text-[#00FFA3]" />
+          <span className="text-[11px]">{currentDateFormatted}</span>
         </div>
 
-        {/* Dynamic Brand / Company Selector */}
-        <div className="relative" ref={brandDropdownRef}>
-          <button
-            id="company-switcher-button"
-            data-testid="company-switcher-button"
-            onClick={() => setIsBrandDropdownOpen(!isBrandDropdownOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 hover:bg-slate-850 text-xs font-medium text-white transition-all shadow-md group"
-            title="Click to switch active monitored company"
-          >
-            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-cyan-500/30 to-blue-600/30 text-cyan-300 font-bold flex items-center justify-center text-[10px] border border-cyan-500/40 shadow-sm">
-              {brandProfile.logoText || 'BG'}
-            </div>
-            <span className="max-w-[120px] sm:max-w-[150px] truncate font-medium">{brandProfile.brandName || company?.name || 'Company'}</span>
-            {isDemoMode && (
-              <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[9px] font-mono font-bold tracking-wider uppercase">
-                DEMO
-              </span>
-            )}
-            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-400 transition-all ${isBrandDropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
+        {/* Search trigger on mobile */}
+        <button
+          onClick={() => setIsSearchOpen(!isSearchOpen)}
+          className="md:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.05] transition-colors"
+        >
+          <Search className="w-4 h-4" />
+        </button>
 
-          {isBrandDropdownOpen && (
-            <div 
-              id="company-switcher-dropdown"
-              className="absolute right-0 mt-2 w-72 p-2.5 rounded-2xl bg-slate-950/95 border border-cyan-500/25 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95 duration-150"
-            >
-              <div className="flex items-center justify-between px-2 py-1 mb-1.5">
-                <span className="text-[10px] font-mono uppercase font-bold text-slate-400 tracking-wider">
-                  Select Monitored Brand
-                </span>
-                <span className="text-[10px] font-mono text-cyan-400 font-medium">
-                  [{availableCompanies.length} ACTIVE]
-                </span>
-              </div>
-
-              <div className="space-y-1 max-h-64 overflow-y-auto pr-0.5">
-                {availableCompanies.map((c) => {
-                  const isSelected = c.id === selectedCompanyId || c.id === company?.id;
-                  return (
-                    <button
-                      key={c.id}
-                      id={`company-option-${c.id}`}
-                      data-testid={`company-option-${c.id}`}
-                      onClick={() => {
-                        switchCompany(c.id);
-                        setIsBrandDropdownOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all ${
-                        isSelected
-                          ? 'bg-cyan-500/15 border border-cyan-500/40 text-white shadow-[0_0_12px_rgba(6,182,212,0.15)]'
-                          : 'bg-slate-900/40 hover:bg-slate-800/70 border border-slate-800/80 text-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
-                          isSelected ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 shadow-sm' : 'bg-slate-800 text-slate-400'
-                        }`}>
-                          {c.logoText || c.name.substring(0, 2).toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <p className={`text-xs font-semibold truncate ${isSelected ? 'text-cyan-300' : 'text-white'}`}>
-                            {c.name}
-                          </p>
-                          <p className="text-[10px] text-slate-400 truncate">
-                            {c.industry}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                        {c.findingsCount !== undefined && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800/90 text-slate-300 font-mono border border-slate-700/60">
-                            {c.findingsCount} threats
-                          </span>
-                        )}
-                        {isSelected && <Check className="w-4 h-4 text-cyan-400 flex-shrink-0" />}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-2 pt-2 border-t border-slate-800/80 px-2 py-1 text-[11px] text-slate-400 leading-snug">
-                <span>Findings and dashboard statistics filter strictly to the active brand scope.</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Notification Bell */}
+        {/* Notification Bell with Cyan Dot */}
         <div className="relative">
           <button
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="relative p-2 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 hover:bg-slate-800 transition-all shadow-sm"
-            aria-label="View notifications"
+            className="w-9 h-9 rounded-xl bg-[#040C1D] hover:bg-[#060D1A] border border-cyan-950/90 hover:border-[#00FFA3]/30 text-slate-300 hover:text-white flex items-center justify-center transition-all relative"
+            title="Active Security Alerts"
           >
             <Bell className="w-4 h-4" />
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]" />
+            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#00FFA3] shadow-[0_0_8px_#00FFA3]" />
           </button>
 
+          {/* Notifications Popover */}
           {isNotificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 p-3 rounded-2xl bg-slate-950/95 border border-cyan-500/20 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
-                <span className="text-xs font-bold text-white">Recent Impersonation Alerts</span>
-                <span className="text-[10px] font-mono text-cyan-400">LIVE FEED</span>
+            <div className="absolute right-0 mt-2 w-80 p-3 rounded-2xl bg-[#040C1D] border border-[#00FFA3]/30 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center justify-between pb-2 border-b border-cyan-950">
+                <span className="text-xs font-semibold text-white">Live Threat Alerts</span>
+                <span className="text-[10px] font-mono text-[#00FFA3]">{recentAlerts.length} Active</span>
               </div>
-              <div className="space-y-2">
-                {recentAlerts.map((finding) => (
-                  <button
-                    key={finding.id}
+              <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
+                {recentAlerts.map((alt) => (
+                  <div
+                    key={alt.id}
                     onClick={() => {
-                      setSelectedFinding(finding);
+                      setSelectedFinding(alt);
                       setIsNotificationsOpen(false);
                     }}
-                    className="w-full text-left p-2.5 rounded-xl bg-slate-900/60 hover:bg-slate-850 border border-slate-800/80 hover:border-cyan-500/30 transition-all"
+                    className="p-2 rounded-xl bg-[#060D1A] hover:bg-[#102048] border border-cyan-950 cursor-pointer transition-colors"
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-white truncate max-w-[170px]">
-                        {finding.title}
-                      </span>
-                      <span className="text-[10px] text-red-400 font-mono font-bold uppercase">
-                        {finding.riskSeverity}
-                      </span>
+                    <div className="flex items-center justify-between text-[10px] text-slate-400">
+                      <span className="text-[#00FFA3] font-mono">{alt.platform || alt.type}</span>
+                      <span>{alt.detectedTime || 'Just now'}</span>
                     </div>
-                    <p className="text-[11px] text-slate-400 truncate">
-                      {finding.mainReason}
-                    </p>
-                    <span className="text-[9px] text-slate-500 mt-1 block font-mono">
-                      {finding.detectedTime}
-                    </span>
-                  </button>
+                    <p className="text-xs text-white font-medium truncate mt-0.5">{alt.candidateUrl || alt.usernameOrPackage || alt.title}</p>
+                  </div>
                 ))}
               </div>
             </div>
           )}
         </div>
 
-        {/* User avatar menu */}
-        <div className="relative">
-          <button
-            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className="flex items-center gap-2.5 pl-2 pr-1.5 py-1 rounded-xl bg-slate-900/60 border border-transparent hover:border-slate-800 hover:bg-slate-850 transition-all"
-          >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-600 text-white font-semibold text-xs flex items-center justify-center ring-2 ring-cyan-500/20 shadow-md">
-              {user?.name ? user.name.split(' ').map(n => n[0]).join('') : 'AM'}
+        {/* Operator Profile or Guest Mode Indicator */}
+        {!isAuthenticated ? (
+          <div className="flex items-center gap-2.5 font-mono">
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#00FFA3]/10 border border-[#00FFA3]/30 text-[10px] text-[#00FFA3]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00FFA3] animate-pulse" />
+              <span>GUEST EXPLORER</span>
             </div>
-            <div className="hidden md:flex flex-col text-left">
-              <span className="text-xs font-medium text-white leading-tight">
-                {user?.name || 'Alex Mercer'}
-              </span>
-              <span className="text-[10px] text-cyan-400/90 font-mono leading-tight">
-                {user?.role || 'SecOps Lead'}
-              </span>
-            </div>
-          </button>
+            <button
+              onClick={() => openAuthModal('Session Authentication', 'Sign in or register your company to unlock full incident remediation and custom scans.')}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#00FFA3] hover:bg-[#00E5FF] text-[#00050B] transition-all shadow-[0_0_15px_rgba(0,255,163,0.3)] flex items-center gap-1.5 border border-white/20"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In / Register</span>
+            </button>
+          </div>
+        ) : (
+          <div className="relative">
+            <button
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              className="flex items-center gap-2.5 p-1.5 pl-2 rounded-xl bg-[#040C1D] hover:bg-[#060D1A] border border-cyan-950/90 hover:border-[#00FFA3]/30 transition-all"
+            >
+              <div className="relative">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#00FFA3]/20 to-[#00E88F]/10 border border-[#00FFA3]/40 text-[#00FFA3] flex items-center justify-center font-bold text-xs">
+                  {user?.name?.charAt(0) || company?.name?.charAt(0) || 'C'}
+                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#00FFA3] ring-2 ring-[#00050B]" />
+              </div>
 
-          {isUserMenuOpen && (
-            <div className="absolute right-0 mt-2 w-56 p-2 rounded-2xl bg-slate-950/95 border border-slate-800 shadow-2xl backdrop-blur-2xl z-50 text-xs text-slate-200 animate-in fade-in zoom-in-95 duration-150">
-              <div className="p-2 border-b border-slate-800 mb-1">
-                <p className="font-semibold text-white">{user?.name || 'Alex Mercer'}</p>
-                <p className="text-[11px] text-slate-400 truncate">{user?.email || 'alex.mercer@acmepay.com'}</p>
+              <div className="hidden sm:flex flex-col text-left">
+                <span className="text-xs font-bold text-white leading-tight font-sans">
+                  {user?.name || company?.name || 'SecOps Lead'}
+                </span>
+                <span className="text-[9px] font-mono text-[#00FFA3]">CYVANTA SOC</span>
               </div>
-              <div className="p-2 text-[11px] text-slate-400">
-                Company: <span className="text-white font-medium">{company?.name || brandProfile.brandName}</span>
-              </div>
-              <div className="p-2 text-[11px] text-slate-400 border-b border-slate-800">
-                Role: <span className="text-cyan-400 font-mono">{user?.role || 'SecOps Lead'}</span>
-              </div>
-              <div className="pt-1">
+
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+
+            {/* User Menu Popover */}
+            {isUserMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 p-2 rounded-2xl bg-[#040C1D] border border-[#00FFA3]/30 shadow-2xl backdrop-blur-2xl z-50">
+                <div className="p-2 border-b border-cyan-950">
+                  <p className="text-xs font-bold text-white">{user?.name || 'Security Analyst'}</p>
+                  <p className="text-[10px] text-slate-400 font-mono">{user?.email || 'analyst@cyvanta.corp'}</p>
+                </div>
+
+                {/* RBAC Role Switcher */}
+                <div className="py-1 border-b border-cyan-950">
+                  <span className="text-[9px] font-mono uppercase text-slate-500 px-2">Active Persona / RBAC:</span>
+                  {(['SOC Analyst', 'Admin', 'Legal / Compliance', 'Executive Auditor'] as UserRole[]).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => {
+                        setActiveRole(r);
+                        setIsUserMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-mono transition-colors flex items-center justify-between ${
+                        r === activeRole ? 'text-[#00FFA3] bg-[#00FFA3]/10 font-bold' : 'text-slate-400 hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      <span>{r}</span>
+                      {r === activeRole && <span className="w-1.5 h-1.5 rounded-full bg-[#00FFA3]" />}
+                    </button>
+                  ))}
+                </div>
+
+                {availableCompanies.length > 1 && (
+                  <div className="py-1 border-b border-cyan-950">
+                    <span className="text-[9px] font-mono uppercase text-slate-500 px-2">Switch Tenant:</span>
+                    {availableCompanies.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => {
+                          switchCompany(c.id);
+                          setIsUserMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-2 py-1.5 rounded-lg text-xs transition-colors ${
+                          c.id === selectedCompanyId ? 'text-[#00FFA3] bg-[#00FFA3]/10' : 'text-slate-300 hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <button
                   onClick={() => {
-                    setIsUserMenuOpen(false);
                     logout();
+                    setIsUserMenuOpen(false);
                   }}
-                  className="w-full text-left p-2 rounded-xl text-red-400 hover:bg-red-500/10 text-xs font-semibold flex items-center gap-2 transition-colors"
+                  className="w-full text-left px-2 py-1.5 rounded-lg text-xs text-rose-400 hover:bg-rose-500/10 transition-colors mt-1 font-mono"
                 >
-                  <span>Sign out</span>
+                  Sign Out
                 </button>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Feature 10: Ask BrandShield Modal */}
+      {/* Ask BrandShield AI Modal */}
       <AskBrandShieldModal
         isOpen={isAssistantOpen}
         onClose={() => setIsAssistantOpen(false)}
+      />
+
+      {/* Global Command Palette (Ctrl+K / Cmd+K) */}
+      <CommandPaletteModal
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
       />
     </header>
   );

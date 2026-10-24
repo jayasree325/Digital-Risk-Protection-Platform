@@ -34,3 +34,18 @@ pnpm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Reference videos, media & PDFs
+*.mp4
+*.webm
+*.mov
+*.avi
+*.mkv
+*.webp
+WhatsApp Video*
+reference/
+references/
+*.pdf
+Scan documents*
+reference_images/
+

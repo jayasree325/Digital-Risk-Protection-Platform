@@ -26,6 +26,9 @@ import { BoardReportPage } from './pages/BoardReportPage';
 import { AlertPreviewPage } from './pages/AlertPreviewPage';
 import { BrandShieldIntroAnimation } from './components/landing/BrandShieldIntroAnimation';
 
+import { PublicBrandVerificationPage } from './pages/PublicBrandVerificationPage';
+import { AuthRequiredModal } from './components/common/AuthRequiredModal';
+
 const MainAppRouter: React.FC = () => {
   const { 
     viewMode, 
@@ -35,7 +38,8 @@ const MainAppRouter: React.FC = () => {
     reportModalFinding,
     closeReportModal,
     isAuthenticated,
-    isLoadingAuth 
+    isLoadingAuth,
+    isDemoMode
   } = useBrandGuard();
 
   // 1. First screen MUST be the Landing Page for visitors (loads immediately)
@@ -48,12 +52,23 @@ const MainAppRouter: React.FC = () => {
     );
   }
 
+  // Public Brand Verification Page
+  if (viewMode === 'verify') {
+    return (
+      <>
+        <PublicBrandVerificationPage />
+        <ToastNotification />
+      </>
+    );
+  }
+
   // Loading auth session check for dashboard views
   if (isLoadingAuth) {
     return (
-      <div className="min-h-screen bg-[#070A14] flex flex-col items-center justify-center text-slate-300">
-        <div className="w-8 h-8 border-2 border-[#8050FF]/30 border-t-[#42DDF5] rounded-full animate-spin mb-3" />
-        <span className="text-xs font-semibold font-mono text-slate-400">Loading AEGIS SOC...</span>
+      <div className="min-h-screen bg-[#00050B] flex flex-col items-center justify-center text-slate-300">
+        <div className="w-8 h-8 border-2 border-[#00FFA3]/20 border-t-[#00FFA3] rounded-full animate-spin mb-3 shadow-[0_0_15px_rgba(0, 255, 163,0.3)]" />
+        <span className="text-sm font-semibold font-mono text-[#00FFA3]">Loading BrandGuard</span>
+        <span className="text-xs text-slate-400 mt-1 font-mono">Preparing your secure workspace...</span>
       </div>
     );
   }
@@ -88,15 +103,7 @@ const MainAppRouter: React.FC = () => {
     );
   }
 
-  // 5. Protected Dashboard: Never show to a logged-out user
-  if (!isAuthenticated) {
-    return (
-      <>
-        <LoginPage />
-        <ToastNotification />
-      </>
-    );
-  }
+  // 5. Dashboard Workspace (Explorable by guests, protected actions require login/signin)
 
   const renderActivePage = () => {
     switch (activePage) {
@@ -134,14 +141,32 @@ const MainAppRouter: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-navy-950 text-slate-100 overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#00050B] text-slate-100 overflow-hidden font-sans relative">
+      {/* Holographic Blue Cyber HUD Ambient Background Lighting Mesh */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 w-[650px] h-[650px] bg-gradient-to-br from-[#00FFA3]/15 via-[#00E88F]/10 to-transparent rounded-full blur-[140px]" />
+        <div className="absolute top-10 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[#00E88F]/12 via-[#00FFA3]/8 to-transparent rounded-full blur-[130px]" />
+        <div className="absolute -bottom-40 left-1/3 w-[700px] h-[450px] bg-gradient-to-t from-[#00FFA3]/10 via-[#00E88F]/6 to-transparent rounded-full blur-[140px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(rgba(0, 255, 163,0.04)_1px,transparent_1px)] [background-size:32px_32px] opacity-75" />
+      </div>
+
       {/* Left Sidebar */}
       <Sidebar />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
         {/* Topbar */}
         <Topbar />
+
+        {/* Demo Mode Notice Banner */}
+        {isDemoMode && (
+          <div className="bg-amber-500/10 border-b border-amber-500/25 px-6 py-2 text-xs text-amber-300 flex items-center justify-between gap-2 font-mono flex-shrink-0 z-10 backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+              <span>Demo mode is active. Some findings and metrics use simulated data.</span>
+            </div>
+          </div>
+        )}
 
         {/* Scrollable Page Body */}
         <main className="flex-1 overflow-y-auto px-6 py-6 scroll-smooth">
@@ -163,6 +188,9 @@ const MainAppRouter: React.FC = () => {
 
       {/* Global Threat Scanning Modal Overlay */}
       <LoadingScanModal />
+
+      {/* Guest Authentication Prompt Modal */}
+      <AuthRequiredModal />
 
       {/* Global Interactive Toast Notification Stack */}
       <ToastNotification />

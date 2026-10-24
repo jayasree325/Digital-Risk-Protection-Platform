@@ -15,6 +15,7 @@ import {
   Check
 } from 'lucide-react';
 import { useBrandGuard } from '../../context/BrandGuardContext';
+import { PlatformBadge } from '../common/PlatformBadge';
 
 interface PlatformPolicyMatchPanelProps {
   finding: Finding;
@@ -108,9 +109,7 @@ Evidentiary Checklist (${completenessPercent}% Complete):
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-            {platform} Enforcement
-          </span>
+          <PlatformBadge platform={platform} size="sm" />
         </div>
       </div>
 

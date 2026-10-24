@@ -13,10 +13,20 @@ import {
   Company,
   BrandAsset,
   ScanStageId,
-  FindingsTabId
+  FindingsTabId,
+  InvestigationCase,
+  CaseStatus,
+  CasePriority
 } from '../types';
-import { initialFindings, initialBrandProfile, sourceStatuses, initialRecentLinkChecks } from '../data/mockData';
+import { initialFindings, initialBrandProfile, sourceStatuses, initialRecentLinkChecks, initialInvestigationCases } from '../data/mockData';
 import { api, getStoredToken } from '../services/api';
+
+export interface AuthPromptModalState {
+  isOpen: boolean;
+  actionTitle?: string;
+  actionDescription?: string;
+  onSuccess?: () => void | Promise<void>;
+}
 
 interface ToastInfo {
   id: string;
@@ -33,6 +43,14 @@ interface BrandGuardContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (data: { name: string; email: string; password: string; companyName: string; website?: string; industry?: string }) => Promise<void>;
   logout: () => void;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
+
+  // Guest Exploration & Auth Interception
+  authModalState: AuthPromptModalState;
+  openAuthModal: (actionTitle?: string, actionDescription?: string, onSuccess?: () => void | Promise<void>) => void;
+  closeAuthModal: () => void;
+  requireAuth: (actionCallback?: () => void | Promise<void>, actionTitle?: string, actionDescription?: string) => boolean;
 
   // Multi-Company Selection Scope
   availableCompanies: Company[];
@@ -42,6 +60,16 @@ interface BrandGuardContextType {
   isDemoMode: boolean;
   isLoadingData: boolean;
   instagramStatus: { configured: boolean; status: string; mode: string; isLiveAvailable: boolean; notice: string } | null;
+  googleStatus: {
+    configured: boolean;
+    searchEngineIdConfigured: boolean;
+    webRiskConfigured: boolean;
+    discoverySource: string;
+    status: string;
+    sourceStatus: string;
+    notice: string;
+    isLiveAvailable: boolean;
+  } | null;
 
   // View modes & pages
   viewMode: AppViewMode;
@@ -73,6 +101,16 @@ interface BrandGuardContextType {
   confirmImpersonation: (id: string) => Promise<void>;
   dismissFinding: (id: string) => Promise<void>;
   addFindingNote: (findingId: string, noteText: string) => Promise<void>;
+
+  // Case Management
+  cases: InvestigationCase[];
+  selectedCase: InvestigationCase | null;
+  setSelectedCase: (c: InvestigationCase | null) => void;
+  createCase: (caseData: { title: string; description: string; priority: CasePriority; assignedAnalyst: string; findingIds?: string[]; tags?: string[] }) => Promise<void>;
+  updateCaseStatus: (caseId: string, status: CaseStatus, note?: string) => Promise<void>;
+  assignFindingToCase: (caseId: string, findingId: string) => Promise<void>;
+  removeFindingFromCase: (caseId: string, findingId: string) => Promise<void>;
+  addCaseNote: (caseId: string, noteText: string) => Promise<void>;
 
   // Scan operations
   isScanning: boolean;
@@ -142,10 +180,28 @@ interface BrandGuardContextType {
 const BrandGuardContext = createContext<BrandGuardContextType | undefined>(undefined);
 
 export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Public Landing Page is ALWAYS first for new/logged-out visitors!
-  const [viewMode, setViewMode] = useState<AppViewMode>('landing');
+  // Public Landing Page is default for logged-out visitors, restored for authenticated sessions
+  const [viewMode, setViewModeState] = useState<AppViewMode>(() => {
+    return (sessionStorage.getItem('brandguard_view_mode') as AppViewMode) || 'landing';
+  });
   const [onboardingStep, setOnboardingStep] = useState<number>(1);
-  const [activePage, setActivePage] = useState<PageId>('home');
+  const [activePage, setActivePageState] = useState<PageId>(() => {
+    return (sessionStorage.getItem('brandguard_active_page') as PageId) || 'home';
+  });
+
+  const setViewMode = useCallback((mode: AppViewMode) => {
+    setViewModeState(mode);
+    try {
+      sessionStorage.setItem('brandguard_view_mode', mode);
+    } catch {}
+  }, []);
+
+  const setActivePage = useCallback((page: PageId) => {
+    setActivePageState(page);
+    try {
+      sessionStorage.setItem('brandguard_active_page', page);
+    } catch {}
+  }, []);
 
   // Auth
   const [user, setUser] = useState<User | null>(null);
@@ -157,21 +213,66 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [availableCompanies, setAvailableCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('comp-acmepay');
   const [instagramStatus, setInstagramStatus] = useState<any>(null);
+  const [googleStatus, setGoogleStatus] = useState<any>(null);
 
   // Data
   const [findings, setFindings] = useState<Finding[]>(initialFindings);
   const [brandProfile, setBrandProfile] = useState<BrandProfile>(initialBrandProfile);
   const [brandAssets, setBrandAssets] = useState<BrandAsset[]>([]);
-  const [sources] = useState<SourceStatusItem[]>(sourceStatuses);
+  const sources: SourceStatusItem[] = useMemo(() => {
+    const isGoogleLive = Boolean(googleStatus?.isLiveAvailable);
+    const googleItem: SourceStatusItem = {
+      id: 'src-google-discovery',
+      name: 'Google Search Discovery',
+      status: isGoogleLive ? 'live' : 'unavailable',
+      statusLabel: googleStatus?.sourceStatus || (isGoogleLive ? 'Live indexed data' : 'Google API not configured'),
+      lastSync: isGoogleLive ? 'Continuous index monitoring' : 'Unconfigured',
+      tooltipText: googleStatus?.notice || 'Google Discovery identifies publicly indexed candidate profiles and websites.',
+    };
+    return [...sourceStatuses, googleItem];
+  }, [googleStatus]);
   const [linkChecks, setLinkChecks] = useState<LinkCheckRecord[]>(initialRecentLinkChecks);
 
   // Active investigation / progressive report
   const [selectedFinding, setSelectedFinding] = useState<Finding | null>(null);
   const [reportModalFinding, setReportModalFinding] = useState<Finding | null>(null);
 
+  // Case Management State
+  const [cases, setCases] = useState<InvestigationCase[]>(initialInvestigationCases);
+  const [selectedCase, setSelectedCase] = useState<InvestigationCase | null>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [toasts, setToasts] = useState<ToastInfo[]>([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Guest exploration auth prompt modal
+  const [authModalState, setAuthModalState] = useState<AuthPromptModalState>({
+    isOpen: false,
+  });
+
+  const openAuthModal = useCallback((actionTitle?: string, actionDescription?: string, onSuccess?: () => void | Promise<void>) => {
+    setAuthModalState({
+      isOpen: true,
+      actionTitle,
+      actionDescription,
+      onSuccess,
+    });
+  }, []);
+
+  const closeAuthModal = useCallback(() => {
+    setAuthModalState({
+      isOpen: false,
+    });
+  }, []);
+
+  const requireAuth = useCallback((actionCallback?: () => void | Promise<void>, actionTitle?: string, actionDescription?: string) => {
+    if (!!user) {
+      if (actionCallback) actionCallback();
+      return true;
+    }
+    openAuthModal(actionTitle || 'Authentication Required', actionDescription, actionCallback);
+    return false;
+  }, [user, openAuthModal]);
 
   // Scan state
   const [isScanning, setIsScanning] = useState(false);
@@ -207,7 +308,17 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       const list = await api.getCompanyList();
       if (list && list.length > 0) {
-        setAvailableCompanies(list);
+        const enriched = list.map((c) => {
+          try {
+            const saved = localStorage.getItem(`brandguard_logo_${c.id}`);
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              return { ...c, logoUrl: parsed.logoUrl || c.logoUrl, logoText: parsed.logoText || c.logoText };
+            }
+          } catch {}
+          return c;
+        });
+        setAvailableCompanies(enriched);
       }
     } catch {
       // Offline fallback
@@ -265,6 +376,26 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, []);
 
+  // Sync Google Discovery status
+  const refreshGoogleStatus = useCallback(async () => {
+    try {
+      const status = await api.getGoogleDiscoveryStatus();
+      setGoogleStatus(status);
+    } catch {
+      setGoogleStatus({
+        configured: false,
+        searchEngineIdConfigured: false,
+        webRiskConfigured: false,
+        discoverySource: 'Google Search',
+        status: 'not_configured',
+        sourceStatus: 'Google API not configured',
+        notice: 'Google Discovery is not configured. Add the backend API credentials and Search Engine ID to enable live discovery.',
+        isLiveAvailable: false,
+      });
+    }
+  }, []);
+
+
   // Apply company metadata into brandProfile
   const applyCompanyToProfile = useCallback((comp: Company, assets: BrandAsset[]) => {
     const socials: OfficialSocialAccount[] = assets
@@ -292,6 +423,12 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         verifiedDate: 'Verified',
       }));
 
+    let customLogo: { logoUrl?: string; logoText?: string } | null = null;
+    try {
+      const saved = localStorage.getItem(`brandguard_logo_${comp.id}`);
+      if (saved) customLogo = JSON.parse(saved);
+    } catch {}
+
     setBrandProfile({
       companyName: comp.name,
       companyEmail: `security@${comp.emailDomain || comp.website.replace(/^https?:\/\//, '').split('/')[0]}`,
@@ -301,7 +438,8 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       website: comp.website ? comp.website.replace(/^https?:\/\//, '').split('/')[0] : 'brand.com',
       productNames: comp.productNames && comp.productNames.length > 0 ? comp.productNames : [`${comp.name} App`, `${comp.name} Online`],
       slogans: comp.slogans && comp.slogans.length > 0 ? comp.slogans : [`Protecting ${comp.name} digital footprint`],
-      logoText: comp.logoText || comp.name.substring(0, 2).toUpperCase(),
+      logoText: customLogo?.logoText || comp.logoText || comp.name.substring(0, 2).toUpperCase(),
+      logoUrl: customLogo?.logoUrl || comp.logoUrl,
       completenessPercent: Math.min(40 + (assets.length * 10), 100),
       officialSocials: socials,
       officialApps: apps,
@@ -334,6 +472,9 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [selectedCompanyId]);
 
   const connectLiveInstagram = useCallback(async () => {
+    if (!requireAuth(() => connectLiveInstagram(), 'Connect Instagram Live API', 'Sign in or register to link social accounts.')) {
+      return;
+    }
     try {
       showToast('Connecting live account via Meta Instagram Graph API...', 'info');
       const res = await api.connectInstagram(selectedCompanyId);
@@ -361,9 +502,12 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } catch (err: any) {
       showToast(err.message || 'Failed to connect Instagram account', 'error');
     }
-  }, [selectedCompanyId, company, applyCompanyToProfile, refreshAvailableCompanies, showToast]);
+  }, [requireAuth, selectedCompanyId, company, applyCompanyToProfile, refreshAvailableCompanies, showToast]);
 
   const disconnectLiveInstagram = useCallback(async () => {
+    if (!requireAuth(() => disconnectLiveInstagram(), 'Disconnect Instagram Account', 'Sign in or register to manage social integrations.')) {
+      return;
+    }
     try {
       showToast('Disconnecting Instagram account...', 'info');
       await api.disconnectInstagram(selectedCompanyId);
@@ -426,6 +570,15 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const token = getStoredToken();
       if (!token) {
         setIsLoadingAuth(false);
+        const demoComp: Company = {
+          id: 'comp-acmepay',
+          name: 'AcmePay Technologies',
+          website: 'https://acmepay.com',
+          industry: 'Financial Technology & Payments',
+          logoText: 'AP',
+          isDemo: true
+        };
+        setCompany(demoComp);
         // Load default demo companies list even before login
         await refreshAvailableCompanies();
         return;
@@ -436,8 +589,13 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setUser(authedUser);
         setCompany(authedCompany);
         setSelectedCompanyId(authedCompany.id);
-        // Website ALWAYS starts with the landing page
-        setViewMode('landing');
+        // Keep authenticated session constant: preserve viewMode if already authenticated
+        const savedView = sessionStorage.getItem('brandguard_view_mode') as AppViewMode | null;
+        if (savedView && (savedView === 'app' || savedView === 'verify')) {
+          setViewMode(savedView);
+        } else {
+          setViewMode('landing');
+        }
 
         const [cDetails, cAssets, cFindings, cChecks] = await Promise.all([
           api.getCompany(authedCompany.id),
@@ -446,6 +604,7 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           api.getLinkChecks(authedCompany.id),
           refreshAvailableCompanies(),
           refreshInstagramStatus(),
+          refreshGoogleStatus(),
           checkInstagramConnected(authedCompany.id),
         ]);
 
@@ -467,7 +626,7 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
 
     initAuth();
-  }, [applyCompanyToProfile, refreshAvailableCompanies, refreshInstagramStatus]);
+  }, [applyCompanyToProfile, refreshAvailableCompanies, refreshInstagramStatus, refreshGoogleStatus]);
 
   // Auth actions
   const login = async (email: string, pass: string) => {
@@ -487,6 +646,7 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         api.getLinkChecks(res.company.id),
         refreshAvailableCompanies(),
         refreshInstagramStatus(),
+        refreshGoogleStatus(),
       ]);
 
       if (cDetails) {
@@ -543,7 +703,49 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setViewMode('landing');
     setSelectedFinding(null);
     setReportModalFinding(null);
+    try {
+      sessionStorage.removeItem('brandguard_view_mode');
+      sessionStorage.removeItem('brandguard_active_page');
+    } catch {}
     showToast('Signed out of BrandGuard', 'info');
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (!requireAuth(() => changePassword(currentPassword, newPassword), 'Change Password', 'Sign in to update your security credentials.')) {
+      return;
+    }
+    try {
+      await api.changePassword(currentPassword, newPassword);
+      showToast('Password updated successfully', 'success');
+    } catch (err: any) {
+      if (isDemoMode || !user?.id) {
+        showToast('Password updated successfully (Demo Workspace)', 'success');
+        return;
+      }
+      throw err;
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (!requireAuth(() => deleteAccount(), 'Delete Account', 'Sign in to manage and delete your account.')) {
+      return;
+    }
+    try {
+      await api.deleteAccount();
+    } catch (err: any) {
+      console.warn('Backend deleteAccount failed, proceeding with local purge:', err);
+    }
+    api.logout();
+    setUser(null);
+    setCompany(null);
+    setViewMode('landing');
+    setSelectedFinding(null);
+    setReportModalFinding(null);
+    try {
+      sessionStorage.removeItem('brandguard_view_mode');
+      sessionStorage.removeItem('brandguard_active_page');
+    } catch {}
+    showToast('Your account has been permanently deleted.', 'info');
   };
 
   // Modal Report Handler
@@ -557,6 +759,9 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Finding Operations
   const updateFindingStatus = async (id: string, newStatus: FindingStatus, note?: string) => {
+    if (!requireAuth(() => updateFindingStatus(id, newStatus, note), `Update Status to "${newStatus}"`, 'Sign in or register to update threat statuses and resolve security findings.')) {
+      return;
+    }
     try {
       await api.updateFindingStatus(id, newStatus, note);
     } catch {
@@ -591,16 +796,25 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const confirmImpersonation = async (id: string) => {
+    if (!requireAuth(() => confirmImpersonation(id), 'Dispatch Takedown Notice', 'Sign in or register to dispatch legal notices and automated DMCA takedown requests.')) {
+      return;
+    }
     await updateFindingStatus(id, 'Confirmed fake', 'Impersonation verified against official brand assets.');
     showToast('Impersonation confirmed. Takedown escalation packet generated.', 'warning');
   };
 
   const dismissFinding = async (id: string) => {
+    if (!requireAuth(() => dismissFinding(id), 'Dismiss Threat Finding', 'Sign in or register to dismiss findings from active threat scope.')) {
+      return;
+    }
     await updateFindingStatus(id, 'Dismissed', 'Determined benign or authorized fan community activity.');
     showToast('Finding dismissed from active threat scope', 'info');
   };
 
   const addFindingNote = async (findingId: string, noteText: string) => {
+    if (!requireAuth(() => addFindingNote(findingId, noteText), 'Add Analyst Note', 'Sign in or register to record audit trail notes.')) {
+      return;
+    }
     try {
       await api.addFindingNote(findingId, noteText);
     } catch {
@@ -628,50 +842,244 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     );
   };
 
+  // Case operations
+  const createCase = async (caseData: {
+    title: string;
+    description: string;
+    priority: CasePriority;
+    assignedAnalyst: string;
+    findingIds?: string[];
+    tags?: string[];
+  }) => {
+    if (!requireAuth(() => createCase(caseData), 'Create Investigation Case', 'Sign in or register to open formal investigation cases.')) {
+      return;
+    }
+    const caseNumber = `CASE-2026-0${Math.floor(Math.random() * 900) + 100}`;
+    const newCase: InvestigationCase = {
+      id: `case-${Date.now()}`,
+      caseNumber,
+      title: caseData.title,
+      description: caseData.description,
+      status: 'Open',
+      priority: caseData.priority,
+      assignedAnalyst: caseData.assignedAnalyst || user?.name || 'Alex Mercer',
+      createdAt: 'Just now',
+      updatedAt: 'Just now',
+      findingIds: caseData.findingIds || [],
+      evidenceCount: (caseData.findingIds || []).length * 2,
+      tags: caseData.tags || ['Investigation', 'Active'],
+      notes: [`Case created by ${user?.name || 'Alex Mercer'}. Initial scope defined.`],
+      activities: [
+        {
+          id: `act-${Date.now()}`,
+          author: user?.name || 'Alex Mercer',
+          role: user?.role || 'SecOps Lead',
+          action: 'Case created',
+          timestamp: 'Just now',
+          note: `Investigation initiated with ${caseData.priority} priority.`,
+        },
+      ],
+    };
+
+    setCases((prev) => [newCase, ...prev]);
+    showToast(`Case ${caseNumber} created successfully`, 'success');
+  };
+
+  const updateCaseStatus = async (caseId: string, status: CaseStatus, note?: string) => {
+    if (!requireAuth(() => updateCaseStatus(caseId, status, note), 'Update Case Status', 'Sign in or register to update investigation case status.')) {
+      return;
+    }
+    setCases((prev) =>
+      prev.map((c) => {
+        if (c.id === caseId) {
+          const newActivity = {
+            id: `act-${Date.now()}`,
+            author: user?.name || 'Alex Mercer',
+            role: user?.role || 'SecOps Lead',
+            action: `Status updated to ${status}`,
+            timestamp: 'Just now',
+            note: note || `Analyst marked case as "${status}".`,
+          };
+          const updated = {
+            ...c,
+            status,
+            updatedAt: 'Just now',
+            activities: [newActivity, ...c.activities],
+            notes: note ? [note, ...c.notes] : c.notes,
+          };
+          if (selectedCase?.id === caseId) setSelectedCase(updated);
+          return updated;
+        }
+        return c;
+      })
+    );
+    showToast(`Case status updated to "${status}"`, 'success');
+  };
+
+  const assignFindingToCase = async (caseId: string, findingId: string) => {
+    if (!requireAuth(() => assignFindingToCase(caseId, findingId), 'Assign Finding to Case', 'Sign in or register to assign findings to cases.')) {
+      return;
+    }
+    setCases((prev) =>
+      prev.map((c) => {
+        if (c.id === caseId) {
+          if (c.findingIds.includes(findingId)) {
+            showToast('Finding is already attached to this case', 'info');
+            return c;
+          }
+          const updatedFindingIds = [...c.findingIds, findingId];
+          const newActivity = {
+            id: `act-${Date.now()}`,
+            author: user?.name || 'Alex Mercer',
+            role: user?.role || 'SecOps Lead',
+            action: `Attached finding ID ${findingId}`,
+            timestamp: 'Just now',
+          };
+          const updated = {
+            ...c,
+            findingIds: updatedFindingIds,
+            evidenceCount: c.evidenceCount + 2,
+            updatedAt: 'Just now',
+            activities: [newActivity, ...c.activities],
+          };
+          if (selectedCase?.id === caseId) setSelectedCase(updated);
+          return updated;
+        }
+        return c;
+      })
+    );
+    showToast('Finding assigned to investigation case', 'success');
+  };
+
+  const removeFindingFromCase = async (caseId: string, findingId: string) => {
+    if (!requireAuth(() => removeFindingFromCase(caseId, findingId), 'Remove Finding from Case', 'Sign in or register to modify cases.')) {
+      return;
+    }
+    setCases((prev) =>
+      prev.map((c) => {
+        if (c.id === caseId) {
+          const updatedFindingIds = c.findingIds.filter((id) => id !== findingId);
+          const newActivity = {
+            id: `act-${Date.now()}`,
+            author: user?.name || 'Alex Mercer',
+            role: user?.role || 'SecOps Lead',
+            action: `Removed finding ID ${findingId}`,
+            timestamp: 'Just now',
+          };
+          const updated = {
+            ...c,
+            findingIds: updatedFindingIds,
+            evidenceCount: Math.max(c.evidenceCount - 2, 0),
+            updatedAt: 'Just now',
+            activities: [newActivity, ...c.activities],
+          };
+          if (selectedCase?.id === caseId) setSelectedCase(updated);
+          return updated;
+        }
+        return c;
+      })
+    );
+    showToast('Finding unlinked from case', 'info');
+  };
+
+  const addCaseNote = async (caseId: string, noteText: string) => {
+    if (!requireAuth(() => addCaseNote(caseId, noteText), 'Add Case Note', 'Sign in or register to append case notes.')) {
+      return;
+    }
+    setCases((prev) =>
+      prev.map((c) => {
+        if (c.id === caseId) {
+          const newActivity = {
+            id: `act-${Date.now()}`,
+            author: user?.name || 'Alex Mercer',
+            role: user?.role || 'SecOps Lead',
+            action: 'Analyst note added',
+            timestamp: 'Just now',
+            note: noteText,
+          };
+          const updated = {
+            ...c,
+            notes: [noteText, ...c.notes],
+            updatedAt: 'Just now',
+            activities: [newActivity, ...c.activities],
+          };
+          if (selectedCase?.id === caseId) setSelectedCase(updated);
+          return updated;
+        }
+        return c;
+      })
+    );
+    showToast('Analyst note saved to case', 'success');
+  };
+
   // Scan operations
   const runNewScan = async (scanType: 'all' | 'social' | 'app' = 'all') => {
+    if (!requireAuth(() => runNewScan(scanType), 'Launch Threat Scan', 'Sign in or register to run live attack radar scans.')) {
+      return;
+    }
     if (isScanning) return;
     setIsScanning(true);
     setScanProgress(0);
     setScanStepIndex(1);
-    setScanStepText('Checking profile names...');
+    setScanStepText('Verifying official brand assets...');
 
     try {
-      // Stage 1: Checking profile names
-      await new Promise((r) => setTimeout(r, 450));
+      // Stage 1: Verify official brand assets
+      await new Promise((r) => setTimeout(r, 400));
       setScanProgress(20);
 
-      // Stage 2: Comparing logos
+      // Stage 2: Check existing social-platform sources
       setScanStepIndex(2);
-      setScanStepText('Comparing logos...');
-      await new Promise((r) => setTimeout(r, 450));
-      setScanProgress(40);
-
-      // Stage 3: Checking suspicious domains
-      setScanStepIndex(3);
-      setScanStepText('Checking suspicious domains...');
-      await new Promise((r) => setTimeout(r, 450));
-      setScanProgress(60);
-
-      // Stage 4: Reviewing app publishers
-      setScanStepIndex(4);
-      setScanStepText('Reviewing app publishers...');
+      setScanStepText('Checking existing social-platform sources (Instagram, Facebook, LinkedIn, X)...');
       if (scanType === 'app') {
         await api.runAppScan(selectedCompanyId).catch(() => {});
       } else {
         await api.runSocialScan(selectedCompanyId).catch(() => {});
       }
+      await new Promise((r) => setTimeout(r, 450));
+      setScanProgress(40);
+
+      // Stage 3: Query Google indexed candidate profiles & Web Risk threat intelligence
+      setScanStepIndex(3);
+      setScanStepText('Querying Google indexed candidate profiles & Google Web Risk...');
+      let googleResult: any = null;
+      try {
+        googleResult = await api.runGoogleScan(selectedCompanyId);
+      } catch {
+        googleResult = {
+          findingsCount: 0,
+          sourceStatus: 'Google Search unavailable',
+          notice: 'Google Discovery unavailable during this scan cycle.',
+        };
+      }
+      await new Promise((r) => setTimeout(r, 450));
+      setScanProgress(60);
+
+      // Stage 4: Compare results with official brand assets & calculate risk
+      setScanStepIndex(4);
+      setScanStepText('Comparing candidate signals against official perimeter & calculating risk...');
       await refreshFindings(selectedCompanyId);
       await new Promise((r) => setTimeout(r, 450));
       setScanProgress(80);
 
-      // Stage 5: Grouping related threats
+      // Stage 5: Finalize findings & allow analyst review
       setScanStepIndex(5);
-      setScanStepText('Grouping related threats...');
-      await new Promise((r) => setTimeout(r, 450));
+      setScanStepText('Finalizing findings & preparing analyst review workflow...');
+      await new Promise((r) => setTimeout(r, 400));
       setScanProgress(100);
 
-      showToast(`Scan complete for ${company?.name || 'brand'}. Threat intelligence updated.`, 'success');
+      const brandNameDisplay = company?.name || 'brand';
+      if (googleResult && googleResult.findingsCount > 0) {
+        showToast(`Scan complete for ${brandNameDisplay}. Google Discovery identified ${googleResult.findingsCount} candidate(s).`, 'success');
+      } else if (googleResult && googleResult.sourceStatus === 'Rate limited') {
+        showToast(`Scan completed with partial sources. Social data available. Google Discovery rate limited.`, 'warning');
+      } else if (googleResult && googleResult.sourceStatus === 'Google quota exceeded') {
+        showToast(`Scan completed with partial sources. Social data available. Google quota exceeded.`, 'warning');
+      } else if (googleResult && !googleResult.configured && googleResult.sourceStatus === 'Google API not configured') {
+        showToast(`Scan complete for ${brandNameDisplay}. Google Discovery not configured (add backend credentials for live index search).`, 'info');
+      } else {
+        showToast(`Scan complete for ${brandNameDisplay}. Threat intelligence updated.`, 'success');
+      }
       setActivePage('scan-results');
     } catch {
       showToast('Scan completed with partial telemetry.', 'info');
@@ -697,11 +1105,17 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const dismissLinkCheck = (id: string) => {
+    if (!requireAuth(() => dismissLinkCheck(id), 'Dismiss Link Check', 'Sign in or register to dismiss link check records.')) {
+      return;
+    }
     setLinkChecks((prev) => prev.filter((r) => r.id !== id));
     showToast('Link check record dismissed', 'info');
   };
 
   const addLinkCheckToFindings = async (record: LinkCheckRecord) => {
+    if (!requireAuth(() => addLinkCheckToFindings(record), 'Add Link to Findings', 'Sign in or register to escalate suspicious links to active findings.')) {
+      return;
+    }
     try {
       await api.addLinkCheckToFindings(record.id);
       await refreshFindings(selectedCompanyId);
@@ -713,11 +1127,32 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Brand profile operations
   const updateBrandProfile = (updates: Partial<BrandProfile>) => {
-    setBrandProfile((prev) => ({ ...prev, ...updates }));
+    if (!requireAuth(() => updateBrandProfile(updates), 'Save Perimeter Profile', 'Sign in or register to modify and save official brand assets.')) {
+      return;
+    }
+    setBrandProfile((prev) => {
+      const next = { ...prev, ...updates };
+      if (updates.logoUrl !== undefined || updates.logoText !== undefined) {
+        try {
+          localStorage.setItem(`brandguard_logo_${selectedCompanyId}`, JSON.stringify({
+            logoUrl: next.logoUrl,
+            logoText: next.logoText,
+          }));
+        } catch {}
+      }
+      return next;
+    });
+    if (updates.logoUrl !== undefined || updates.logoText !== undefined) {
+      setCompany((prev) => prev ? { ...prev, logoUrl: updates.logoUrl, logoText: updates.logoText || prev.logoText } : null);
+      setAvailableCompanies((prev) => prev.map((c) => c.id === selectedCompanyId ? { ...c, logoUrl: updates.logoUrl, logoText: updates.logoText || c.logoText } : c));
+    }
     showToast('Brand profile parameters updated', 'success');
   };
 
   const addOfficialSocial = (account: Omit<OfficialSocialAccount, 'id' | 'verifiedDate'>) => {
+    if (!requireAuth(() => addOfficialSocial(account), 'Add Official Social Asset', 'Sign in or register to add verified social accounts.')) {
+      return;
+    }
     const newAccount: OfficialSocialAccount = {
       ...account,
       id: 'soc-' + Math.random().toString(36).substring(2, 7),
@@ -740,6 +1175,9 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const addOfficialApp = (app: Omit<OfficialMobileApp, 'id' | 'verifiedDate'>) => {
+    if (!requireAuth(() => addOfficialApp(app), 'Add Official Mobile App', 'Sign in or register to add verified mobile applications.')) {
+      return;
+    }
     const newApp: OfficialMobileApp = {
       ...app,
       id: 'app-' + Math.random().toString(36).substring(2, 7),
@@ -763,6 +1201,9 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const verifyOfficialAsset = async (assetId: string) => {
+    if (!requireAuth(() => verifyOfficialAsset(assetId), 'Verify Official Asset', 'Sign in or register to verify digital assets.')) {
+      return;
+    }
     try {
       await api.verifyAsset(assetId);
       await refreshAssets(selectedCompanyId);
@@ -830,6 +1271,12 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         login,
         register,
         logout,
+        changePassword,
+        deleteAccount,
+        authModalState,
+        openAuthModal,
+        closeAuthModal,
+        requireAuth,
         availableCompanies,
         selectedCompanyId,
         switchCompany,
@@ -861,6 +1308,14 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         confirmImpersonation,
         dismissFinding,
         addFindingNote,
+        cases,
+        selectedCase,
+        setSelectedCase,
+        createCase,
+        updateCaseStatus,
+        assignFindingToCase,
+        removeFindingFromCase,
+        addCaseNote,
         isScanning,
         scanProgress,
         scanStepText,
@@ -893,6 +1348,7 @@ export const BrandGuardProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         connectedInstagram,
         connectLiveInstagram,
         disconnectLiveInstagram,
+        googleStatus,
       }}
     >
       {children}

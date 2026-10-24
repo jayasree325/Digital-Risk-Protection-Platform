@@ -12,7 +12,7 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
   children,
   className = '',
   enable3DTilt = true,
-  spotlightColor = 'rgba(6, 182, 212, 0.15)',
+  spotlightColor = 'rgba(0, 255, 163, 0.18)',
   showCornerAccents = false,
   ...props
 }) => {
@@ -51,27 +51,27 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className={`relative rounded-xl border border-slate-800/80 bg-gradient-to-b from-slate-900/80 to-navy-950/90 backdrop-blur-md overflow-hidden transition-all duration-300 ease-out ${
+      className={`relative rounded-2xl border border-[#00FFA3]/15 bg-[#020713]/85 backdrop-blur-2xl shadow-[0_12px_36px_rgba(0,5,11,0.6)] hover:border-[#00FFA3]/40 overflow-hidden transition-all duration-300 ease-out ${
         showCornerAccents ? 'retro-corner-bracket' : ''
       } ${className}`}
       style={{
-        transform: transformStyle,
-        transformStyle: 'preserve-3d',
-        willChange: 'transform',
+        transform: enable3DTilt ? transformStyle : undefined,
+        transformStyle: enable3DTilt ? 'preserve-3d' : undefined,
+        willChange: enable3DTilt ? 'transform' : undefined,
       }}
       {...props}
     >
       {/* Magic UI Dynamic Cursor Spotlight */}
       <div
-        className="pointer-events-none absolute -inset-px rounded-xl opacity-0 transition-opacity duration-300"
+        className="pointer-events-none absolute -inset-px rounded-2xl opacity-0 transition-opacity duration-300"
         style={{
           opacity,
           background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, ${spotlightColor}, transparent 80%)`,
         }}
       />
 
-      {/* Unlumen UI Specular Top Inset Highlight */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
+      {/* Aurora Specular Top Inset Highlight */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00FFA3]/40 to-transparent" />
 
       {/* Card Content with 3D child preservation */}
       <div className="relative z-10 w-full h-full">

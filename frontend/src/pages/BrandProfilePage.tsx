@@ -31,7 +31,6 @@ import {
   Lock,
   Radar
 } from 'lucide-react';
-import heroBg from '../assets/cyber_hero_skyline.jpg';
 
 export const BrandProfilePage: React.FC = () => {
   const { 
@@ -48,7 +47,9 @@ export const BrandProfilePage: React.FC = () => {
     findings,
     brandAssets,
     setSelectedFinding,
-    isLoadingData
+    isLoadingData,
+    requireAuth,
+    googleStatus,
   } = useBrandGuard();
 
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
@@ -77,6 +78,18 @@ export const BrandProfilePage: React.FC = () => {
 
   const handleSaveChanges = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!requireAuth(() => {
+      updateBrandProfile({
+        brandName,
+        website,
+        aliases: aliasesInput.split(',').map((s) => s.trim()).filter(Boolean),
+        productNames: productsInput.split(',').map((s) => s.trim()).filter(Boolean),
+        slogans: [sloganInput.trim()],
+      });
+      showToast('Brand profile changes saved to detection engine', 'success');
+    }, 'Save Perimeter Dossier', 'Sign in or register to update and save official brand identity records.')) {
+      return;
+    }
     updateBrandProfile({
       brandName,
       website,
@@ -88,6 +101,9 @@ export const BrandProfilePage: React.FC = () => {
   };
 
   const handleVerifyAsset = () => {
+    if (!requireAuth(() => handleVerifyAsset(), 'Verify All Assets', 'Sign in or register to verify official assets.')) {
+      return;
+    }
     showToast('All registered official assets successfully re-verified against public registries', 'success');
   };
 
@@ -99,18 +115,12 @@ export const BrandProfilePage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16 font-sans">
       
-      {/* 1. Cinematic Photographic Hero Banner: Company Intelligence Workspace */}
-      <div className="relative rounded-3xl overflow-hidden border border-cyan-500/25 shadow-2xl">
-        {/* Photographic Background: Nighttime City Skyline / Digital Cyber Infrastructure */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center transform scale-105 filter brightness-75 contrast-125"
-          style={{ backgroundImage: `url(${heroBg})` }}
-        />
-        
-        {/* Dark Tactical Overlays to guarantee high contrast readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#060911] via-[#060911]/85 to-[#060911]/50" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,0.15),transparent_60%)]" />
-        <div className="absolute inset-0 cyber-grid-pattern opacity-30 pointer-events-none" />
+      {/* 1. Hero Banner: Company Intelligence Workspace */}
+      <div className="relative rounded-3xl overflow-hidden border border-[#00FFA3]/20 bg-[#040C1D] shadow-2xl">
+        {/* Subtle Cyber Grid and Gradient Aura */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#00050B] via-[#040C1D] to-[#060D1A]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,255,163,0.08),transparent_60%)]" />
+        <div className="absolute inset-0 cyber-grid-pattern opacity-25 pointer-events-none" />
 
         {/* Content Container */}
         <div className="relative z-10 p-6 sm:p-8 space-y-6">
@@ -177,7 +187,7 @@ export const BrandProfilePage: React.FC = () => {
                       <button
                         onClick={() => {
                           setIsCompanyDropdownOpen(false);
-                          setIsRegisterModalOpen(true);
+                          requireAuth(() => setIsRegisterModalOpen(true), 'Register Enterprise', 'Sign in or register to add a new company perimeter.');
                         }}
                         className="w-full px-3 py-2 rounded-xl text-xs font-bold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 flex items-center justify-center gap-1.5 transition-colors"
                       >
@@ -193,7 +203,7 @@ export const BrandProfilePage: React.FC = () => {
             {/* Top Action Buttons */}
             <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
               <button
-                onClick={() => setIsRegisterModalOpen(true)}
+                onClick={() => requireAuth(() => setIsRegisterModalOpen(true), 'Register Enterprise', 'Sign in or register to add a new company perimeter.')}
                 className="px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-navy-950 transition-all flex items-center gap-1.5 shadow-lg shadow-cyan-500/20"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -468,7 +478,7 @@ export const BrandProfilePage: React.FC = () => {
 
                 <div className="flex items-center gap-2 w-full">
                   <button
-                    onClick={() => setIsUploadLogoOpen(true)}
+                    onClick={() => requireAuth(() => setIsUploadLogoOpen(true), 'Upload Brand Logo', 'Sign in or register to upload official brand trademark assets.')}
                     className="flex-1 px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center justify-center gap-1.5"
                   >
                     <Upload className="w-3 h-3 text-cyan-400" />
@@ -476,7 +486,7 @@ export const BrandProfilePage: React.FC = () => {
                   </button>
 
                   <button
-                    onClick={() => setIsUploadLogoOpen(true)}
+                    onClick={() => requireAuth(() => setIsUploadLogoOpen(true), 'Upload Brand Logo', 'Sign in or register to upload official brand trademark assets.')}
                     className="flex-1 px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center justify-center gap-1.5"
                   >
                     <RefreshCw className="w-3 h-3 text-slate-400" />
@@ -597,6 +607,44 @@ export const BrandProfilePage: React.FC = () => {
             </div>
           </section>
 
+          {/* Google Discovery Source Integration Card */}
+          <section className="p-5 sm:p-6 rounded-2xl bg-[#040C1D] border border-cyan-500/20 shadow-xl relative overflow-hidden space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-600/20 to-blue-600/20 border border-cyan-500/40 flex items-center justify-center flex-shrink-0">
+                  <Globe className="w-6 h-6 text-cyan-400" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm font-bold text-white tracking-tight">
+                      Google Search & Web Risk Discovery
+                    </h3>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                      googleStatus?.isLiveAvailable 
+                        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' 
+                        : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                    }`}>
+                      {googleStatus?.sourceStatus || (googleStatus?.isLiveAvailable ? 'Live indexed data' : 'Google API not configured')}
+                    </span>
+                    {googleStatus?.webRiskConfigured && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                        WEB RISK ACTIVE
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                    {googleStatus?.isLiveAvailable
+                      ? 'Backend Google Custom Search discovery is active. When running threat scans, publicly indexed profiles and websites matching registered brand names and aliases will be ingested into telemetry.'
+                      : 'Google Discovery is not configured. Add the backend API credentials (GOOGLE_SEARCH_API_KEY, GOOGLE_SEARCH_ENGINE_ID) to enable live discovery.'}
+                  </p>
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    *Google Discovery identifies publicly indexed candidate pages. It does not guarantee that every profile is found or prove that a result is fake.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Official Social Media Accounts Section */}
           <section className="space-y-4">
             <div className="flex items-center justify-between">
@@ -611,7 +659,7 @@ export const BrandProfilePage: React.FC = () => {
               </div>
 
               <button
-                onClick={() => setIsAddAccountOpen(true)}
+                onClick={() => requireAuth(() => setIsAddAccountOpen(true), 'Add Official Social Account', 'Sign in or register to add verified social accounts.')}
                 className="px-3.5 py-2 rounded-xl text-xs font-bold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 transition-colors flex items-center gap-1.5"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -644,7 +692,7 @@ export const BrandProfilePage: React.FC = () => {
               </div>
 
               <button
-                onClick={() => setIsAddAppOpen(true)}
+                onClick={() => requireAuth(() => setIsAddAppOpen(true), 'Add Official Mobile App', 'Sign in or register to add verified mobile applications.')}
                 className="px-3.5 py-2 rounded-xl text-xs font-bold bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 transition-colors flex items-center gap-1.5"
               >
                 <Plus className="w-3.5 h-3.5" />

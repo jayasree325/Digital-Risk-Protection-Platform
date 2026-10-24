@@ -16,23 +16,23 @@ export const SignalScoreBarChart: React.FC<SignalScoreBarChartProps> = ({ findin
         { label: 'Name similarity', pct: Math.min(Math.round(finding.riskScore * 0.95), 98), color: 'from-orange-500 to-red-500' },
         { label: 'Logo similarity', pct: Math.min(Math.round(finding.riskScore * 0.9), 95), color: 'from-amber-500 to-orange-500' },
         { label: 'Domain risk', pct: Math.min(Math.round(finding.riskScore * 0.98), 99), color: 'from-red-500 to-rose-600' },
-        { label: 'Publisher mismatch', pct: 85, color: 'from-purple-500 to-indigo-500' },
+        { label: 'Publisher mismatch', pct: 85, color: 'from-[#00FFA3] to-[#00E5FF]' },
         { label: 'Description similarity', pct: 72, color: 'from-blue-500 to-cyan-500' },
       ]
     : [
         { label: 'Name similarity', pct: 90, color: 'from-orange-500 to-red-500' },
         { label: 'Logo similarity', pct: 85, color: 'from-amber-500 to-orange-500' },
         { label: 'Domain risk', pct: 95, color: 'from-red-500 to-rose-600' },
-        { label: 'Publisher mismatch', pct: 80, color: 'from-purple-500 to-indigo-500' },
+        { label: 'Publisher mismatch', pct: 80, color: 'from-[#00FFA3] to-[#00E5FF]' },
         { label: 'Description similarity', pct: 72, color: 'from-blue-500 to-cyan-500' },
       ];
 
   return (
-    <div className="p-4 rounded-xl bg-navy-850 border border-slate-800 space-y-4">
+    <div className="p-4 rounded-xl bg-[#020713] border border-[#00FFA3]/20 space-y-4">
       <div className="flex items-center justify-between pb-2 border-b border-slate-800">
         <div>
           <h4 className="text-xs font-bold text-white tracking-tight flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 text-cyan-400" />
+            <ShieldAlert className="w-4 h-4 text-[#00FFA3]" />
             <span>Why this received this score</span>
           </h4>
           <span className="text-[11px] text-slate-400">

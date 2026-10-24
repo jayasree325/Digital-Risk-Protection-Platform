@@ -13,10 +13,11 @@ export const SourceStatusPanel: React.FC = () => {
   };
 
   return (
-    <div className="p-5 rounded-2xl bg-navy-850 border border-slate-800 space-y-4">
+    <div className="p-5 rounded-2xl bg-[#020713]/85 backdrop-blur-2xl border border-[#00FFA3]/20 space-y-4 shadow-glass relative overflow-hidden">
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#00FFA3]/40 to-transparent pointer-events-none" />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400">
+          <div className="p-1.5 rounded-lg bg-[#00FFA3]/10 text-[#00FFA3] border border-[#00FFA3]/20">
             <Radio className="w-4 h-4" />
           </div>
           <div>
@@ -28,8 +29,8 @@ export const SourceStatusPanel: React.FC = () => {
             </p>
           </div>
         </div>
-        <span className="text-[11px] font-medium text-emerald-400 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        <span className="text-[11px] font-medium text-[#00FFA3] flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00FFA3]/10 border border-[#00FFA3]/30 backdrop-blur-md">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00FFA3] animate-pulse shadow-[0_0_8px_#00FFA3]" />
           System Operational
         </span>
       </div>
@@ -56,8 +57,8 @@ export const SourceStatusPanel: React.FC = () => {
               dot: 'bg-red-400',
             },
             demo_data: {
-              badge: 'bg-purple-500/10 text-purple-400 border-purple-500/25',
-              dot: 'bg-purple-400',
+              badge: 'bg-[#00FFA3]/10 text-[#00FFA3] border-[#00FFA3]/25',
+              dot: 'bg-[#00FFA3]',
             },
           };
 
@@ -66,12 +67,12 @@ export const SourceStatusPanel: React.FC = () => {
           return (
             <div
               key={source.id}
-              className="p-3.5 rounded-xl bg-navy-900 border border-slate-800/80 flex flex-col justify-between"
+              className="p-3.5 rounded-xl bg-[#00050B]/80 hover:bg-[#00050B] border border-white/[0.06] hover:border-[#00FFA3]/40 transition-all flex flex-col justify-between shadow-sm"
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="p-1.5 rounded-lg bg-slate-800 text-slate-300">
-                    <Icon className="w-3.5 h-3.5 text-cyan-400" />
+                  <div className="p-1.5 rounded-lg bg-white/[0.05] text-[#00FFA3] border border-white/[0.08]">
+                    <Icon className="w-3.5 h-3.5 text-[#00FFA3]" />
                   </div>
                   <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${currentBadge.badge}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${currentBadge.dot}`} />

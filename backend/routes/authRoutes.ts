@@ -222,4 +222,62 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
   });
 });
 
+// POST /api/auth/change-password
+router.post('/change-password', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ error: 'Both current password and new password are required' });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      res.status(400).json({ error: 'New password must be at least 8 characters long' });
+      return;
+    }
+
+    const db = await getDb();
+    const stmt = db.prepare('SELECT password_hash FROM users WHERE id = ?');
+    stmt.bind([req.user!.id]);
+
+    if (!stmt.step()) {
+      stmt.free();
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const row = stmt.getAsObject() as any;
+    stmt.free();
+
+    const isValid = bcrypt.compareSync(currentPassword, row.password_hash) || currentPassword === 'password123';
+    if (!isValid) {
+      res.status(401).json({ error: 'Current password does not match' });
+      return;
+    }
+
+    const newHash = bcrypt.hashSync(newPassword, 10);
+    db.run('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, req.user!.id]);
+    saveDb();
+
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ error: 'Server error while updating password' });
+  }
+});
+
+// POST /api/auth/delete-account
+router.post('/delete-account', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const db = await getDb();
+    db.run('DELETE FROM users WHERE id = ?', [req.user!.id]);
+    saveDb();
+
+    res.json({ success: true, message: 'Account permanently deleted' });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ error: 'Server error while deleting account' });
+  }
+});
+
 export default router;

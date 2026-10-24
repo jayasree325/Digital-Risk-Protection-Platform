@@ -17,7 +17,7 @@ import {
 import { RiskBadge } from '../components/common/RiskBadge';
 
 export const BoardReportPage: React.FC = () => {
-  const { brandProfile, company, findings, counts, brandAssets } = useBrandGuard();
+  const { brandProfile, company, findings, counts, brandAssets, requireAuth } = useBrandGuard();
 
   const brandName = company?.name || brandProfile.brandName || 'AcmePay Technologies';
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -33,51 +33,81 @@ export const BoardReportPage: React.FC = () => {
   const brandSafetyScore = Math.max(100 - (counts.critical * 8 + (criticalAndHighCount - counts.critical) * 4), 45);
 
   const handlePrint = () => {
+    if (!requireAuth(() => window.print(), 'Export Executive Board Briefing', 'Sign in or register to export board-level compliance reports.')) {
+      return;
+    }
     window.print();
   };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12 font-sans print:p-0 print:m-0 print:max-w-none">
+      {/* Print stylesheet override for flawless executive PDF output */}
+      <style>{`
+        @media print {
+          body {
+            background: #ffffff !important;
+            color: #0f172a !important;
+          }
+          nav, header, aside, .print\\:hidden {
+            display: none !important;
+          }
+          .board-print-canvas {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+          }
+          .print-card {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #0f172a !important;
+          }
+        }
+      `}</style>
+
       {/* Top Action Bar (hidden when printing) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl unlumen-card border border-slate-800 print:hidden shadow-lg">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl cyber-bento-card border border-[#00FFA3]/20 print:hidden shadow-lg">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-white tracking-tight">
               Executive Board & Audit Security Report
             </h1>
-            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-950/60 text-amber-300 border border-amber-500/30 uppercase tracking-wider">
+            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#00FFA3]/15 text-[#00FFA3] border border-[#00FFA3]/30 uppercase tracking-wider">
               [AUDIT_CERTIFIED]
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Quarterly brand integrity posture, threat mitigation velocity, and commercial risk exposure summary.
+            Quarterly brand integrity posture, MTTR velocity, and commercial risk exposure summary.
           </p>
         </div>
 
         <button
           onClick={handlePrint}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-md shadow-cyan-500/20 self-start sm:self-auto btn-smooth"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00FFA3] hover:bg-[#00E88F] text-[#00050B] text-xs font-bold font-mono transition-all shadow-[0_0_15px_rgba(0,255,163,0.3)] self-start sm:self-auto btn-smooth"
         >
-          <Printer className="w-4 h-4 text-slate-950" />
-          <span>Print or Save as PDF</span>
+          <Printer className="w-4 h-4 text-[#00050B]" />
+          <span>Generate Board Briefing (PDF)</span>
         </button>
       </div>
 
       {/* Main Board Document Canvas */}
-      <div className="p-8 sm:p-12 rounded-3xl unlumen-card border border-cyan-500/20 shadow-2xl space-y-8 text-slate-100 print:bg-white print:text-black print:border-none print:shadow-none print:p-0">
+      <div className="board-print-canvas p-8 sm:p-12 rounded-3xl cyber-bento-card border border-[#00FFA3]/20 shadow-2xl space-y-8 text-slate-100 print:bg-white print:text-black print:border-none print:shadow-none print:p-0">
         
         {/* Document Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-slate-800 print:border-slate-300">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-[#00FFA3]/20 print:border-slate-300">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/30 text-cyan-400 border border-cyan-500/40 flex items-center justify-center font-black text-sm print:border-slate-800 print:text-black shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-[#00FFA3]/10 text-[#00FFA3] border border-[#00FFA3]/40 flex items-center justify-center font-black text-sm print:border-slate-800 print:text-black shadow-sm">
                 {brandProfile.logoText || 'BG'}
               </div>
               <div>
                 <h2 className="text-2xl font-black tracking-tight text-white print:text-black">
                   {brandName}
                 </h2>
-                <span className="text-xs font-mono text-cyan-400 print:text-slate-600 uppercase tracking-wider font-semibold">
+                <span className="text-xs font-mono text-[#00FFA3] print:text-slate-600 uppercase tracking-wider font-semibold">
                   Board Cybersecurity & Brand Protection Brief
                 </span>
               </div>
@@ -86,7 +116,7 @@ export const BoardReportPage: React.FC = () => {
 
           <div className="text-left sm:text-right space-y-1 text-xs text-slate-400 print:text-slate-700">
             <div className="flex sm:justify-end items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+              <Calendar className="w-3.5 h-3.5 text-[#00FFA3]" />
               <span>Report Date: <strong className="text-white print:text-black font-mono">{currentDate}</strong></span>
             </div>
             <div className="flex sm:justify-end items-center gap-1.5">
@@ -98,14 +128,14 @@ export const BoardReportPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Executive Summary Metrics Strip */}
+        {/* Executive Summary Metrics Strip (Including MTTR & Averted Loss) */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* Brand Safety Score */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-slate-950/80 border border-slate-800 print:border-slate-300 print:bg-slate-50 space-y-1 shadow-inner">
+          <div className="print-card p-4 sm:p-5 rounded-2xl bg-[#00050B] border border-[#00FFA3]/20 print:border-slate-300 print:bg-slate-50 space-y-1 shadow-inner">
             <span className="text-[10px] uppercase font-mono font-bold text-slate-400 print:text-slate-600 block">
               Brand Safety Score
             </span>
-            <div className="text-3xl font-black font-mono text-cyan-400 print:text-blue-700">
+            <div className="text-3xl font-black font-mono text-[#00FFA3] print:text-emerald-700">
               {brandSafetyScore}
               <span className="text-sm font-normal text-slate-400">/100</span>
             </div>
@@ -114,39 +144,39 @@ export const BoardReportPage: React.FC = () => {
             </span>
           </div>
 
-          {/* Total Threat Findings */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-slate-950/80 border border-slate-800 print:border-slate-300 print:bg-slate-50 space-y-1 shadow-inner">
+          {/* MTTR Metric */}
+          <div className="print-card p-4 sm:p-5 rounded-2xl bg-[#00050B] border border-[#00FFA3]/20 print:border-slate-300 print:bg-slate-50 space-y-1 shadow-inner">
             <span className="text-[10px] uppercase font-mono font-bold text-slate-400 print:text-slate-600 block">
-              Total Identified Threats
+              Mean Time To Remediate (MTTR)
             </span>
             <div className="text-3xl font-black font-mono text-white print:text-black">
-              {findings.length}
+              4.2 <span className="text-sm font-normal text-slate-400">Hours</span>
             </div>
-            <span className="text-[10px] text-slate-400 print:text-slate-600 font-medium block">
-              Across apps, domains, socials
+            <span className="text-[10px] text-[#00FFA3] print:text-emerald-700 font-medium block">
+              &darr; 38% YoY Takedown Velocity
             </span>
           </div>
 
           {/* Critical / High Risk */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-slate-950/80 border border-slate-800 print:border-slate-300 print:bg-slate-50 space-y-1 shadow-inner">
+          <div className="print-card p-4 sm:p-5 rounded-2xl bg-[#00050B] border border-[#00FFA3]/20 print:border-slate-300 print:bg-slate-50 space-y-1 shadow-inner">
             <span className="text-[10px] uppercase font-mono font-bold text-slate-400 print:text-slate-600 block">
-              Critical & High Severity
+              Critical & High Threats
             </span>
             <div className="text-3xl font-black font-mono text-red-400 print:text-red-700">
               {criticalAndHighCount}
             </div>
             <span className="text-[10px] text-red-400/80 print:text-red-700 font-medium block">
-              Active impersonation vectors
+              {counts.confirmed} Confirmed Neutralized
             </span>
           </div>
 
           {/* Fraud Exposure Estimate */}
-          <div className="p-4 rounded-2xl bg-navy-950 border border-slate-800 print:border-slate-300 print:bg-slate-50 space-y-1">
-            <span className="text-[10px] uppercase font-bold text-slate-400 print:text-slate-600 block">
-              Estimated Exposure Mitigated
+          <div className="print-card p-4 sm:p-5 rounded-2xl bg-[#00050B] border border-[#00FFA3]/20 print:border-slate-300 print:bg-slate-50 space-y-1 shadow-inner">
+            <span className="text-[10px] uppercase font-bold text-slate-400 print:text-slate-600 block font-mono">
+              Averted Commercial Capital
             </span>
-            <div className="text-3xl font-black text-emerald-400 print:text-emerald-700">
-              $480K
+            <div className="text-3xl font-black text-[#00FFA3] print:text-emerald-700 font-mono">
+              $1.42M
             </div>
             <span className="text-[10px] text-slate-400 print:text-slate-600 font-medium block">
               Potential fraud prevented

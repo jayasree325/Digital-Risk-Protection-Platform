@@ -1,34 +1,33 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useBrandGuard } from '../context/BrandGuardContext';
-import { GlobalThreatMap } from '../components/overview/GlobalThreatMap';
-import { CompactTelemetryHUD } from '../components/overview/CompactTelemetryHUD';
-import { LiveThreatStream } from '../components/overview/LiveThreatStream';
-import { DonutChart } from '../components/charts/DonutChart';
-import { ComparisonBarChart } from '../components/charts/ComparisonBarChart';
-import { TrendLineChart } from '../components/charts/TrendLineChart';
-import { SourceStatusPanel } from '../components/overview/SourceStatusPanel';
-import { SpotlightCard } from '../components/common/SpotlightCard';
 import { 
-  Link2, 
-  Share2, 
-  Smartphone, 
-  ArrowRight, 
+  ShieldCheck, 
   ShieldAlert, 
-  AlertOctagon, 
+  Smartphone, 
+  Headphones, 
+  Crosshair, 
   Radar, 
-  ShieldCheck,
+  Activity, 
+  Layers, 
+  Flame, 
+  Terminal,
+  Zap,
   CheckCircle2,
   AlertTriangle,
-  Terminal,
-  Crosshair,
-  ExternalLink,
-  Zap,
-  Globe2,
-  FileText,
-  Megaphone,
-  FileSearch,
-  Code2
+  Network
 } from 'lucide-react';
+import { DotMatrixDisplay } from '../components/cyber/DotMatrixDisplay';
+import { EqualizerBars } from '../components/cyber/EqualizerBars';
+import { ThreatTrendSparkline } from '../components/cyber/ThreatTrendSparkline';
+import { NeedsAttentionBento } from '../components/cyber/NeedsAttentionBento';
+import { ThreatEvidenceFolder } from '../components/cyber/ThreatEvidenceFolder';
+import { ThreatDistributionVisualizer } from '../components/cyber/ThreatDistributionVisualizer';
+import { RecentSecurityFeed } from '../components/cyber/RecentSecurityFeed';
+import { GlobalThreatActivityCenter } from '../components/cyber/GlobalThreatActivityCenter';
+import { OperationsHudView } from '../components/cyber/OperationsHudView';
+import { ThreatVector } from '../components/common/CyberGlobe3D';
+import { CampaignClusteringView } from '../components/cyber/CampaignClusteringView';
+import { resolveSourceStatus } from '../components/common/SourceStatusBadge';
 
 export const OverviewPage: React.FC = () => {
   const { 
@@ -40,281 +39,382 @@ export const OverviewPage: React.FC = () => {
     setActivePage, 
     findings, 
     brandProfile, 
-    openReportModal,
+    setSelectedFinding,
     navigateToFindings,
     isDemoMode,
-    isLoadingData,
   } = useBrandGuard();
 
-  // Compute severity breakdown for DonutChart
-  const severityDonutData = useMemo(() => {
-    const openFindings = findings.filter((f) => f.status !== 'Dismissed' && f.status !== 'Resolved');
-    const total = openFindings.length || 1;
+  // Mode: Primary Video 1 Command Center vs Video 2 Operations HUD vs Campaign Clusters
+  const [activeHudMode, setActiveHudMode] = useState<'command' | 'operations' | 'campaigns'>('command');
 
-    const critical = openFindings.filter((f) => f.riskSeverity === 'critical').length;
-    const high = openFindings.filter((f) => f.riskSeverity === 'high').length;
-    const medium = openFindings.filter((f) => f.riskSeverity === 'medium').length;
-    const low = openFindings.filter((f) => f.riskSeverity === 'low').length;
+  // Map real findings and simulated threats into ThreatVector objects for 3D Globe
+  const threats: ThreatVector[] = useMemo(() => {
+    const originCities = [
+      { city: 'Frankfurt', country: 'Germany', lat: 50.11, lng: 8.68 },
+      { city: 'Moscow', country: 'Russia', lat: 55.75, lng: 37.61 },
+      { city: 'Shenzhen', country: 'China', lat: 22.54, lng: 114.05 },
+      { city: 'São Paulo', country: 'Brazil', lat: -23.55, lng: -46.63 },
+      { city: 'London', country: 'United Kingdom', lat: 51.50, lng: -0.12 },
+      { city: 'Amsterdam', country: 'Netherlands', lat: 52.37, lng: 4.89 },
+      { city: 'Lagos', country: 'Nigeria', lat: 6.52, lng: 3.37 },
+      { city: 'Toronto', country: 'Canada', lat: 43.65, lng: -79.38 },
+      { city: 'Singapore', country: 'Singapore', lat: 1.35, lng: 103.81 },
+      { city: 'Tokyo', country: 'Japan', lat: 35.67, lng: 139.65 },
+    ];
 
-    return {
-      total: openFindings.length,
-      segments: [
-        { label: 'Critical Risk', count: critical, pct: Math.round((critical / total) * 100), color: '#FF5878' },
-        { label: 'High Risk', count: high, pct: Math.round((high / total) * 100), color: '#f97316' },
-        { label: 'Medium Risk', count: medium, pct: Math.round((medium / total) * 100), color: '#FFBD69' },
-        { label: 'Low Risk', count: low, pct: Math.round((low / total) * 100), color: '#94a3b8' },
-      ],
+    const targetHq = {
+      city: 'San Francisco',
+      country: 'United States',
+      lat: 37.77,
+      lng: -122.41,
+      asset: brandProfile.website || 'brandguard.io'
     };
+
+    const types: ('phish' | 'typo' | 'impr' | 'rogu' | 'leak' | 'bots')[] = [
+      'phish', 'typo', 'impr', 'rogu', 'leak', 'bots'
+    ];
+
+    return findings.slice(0, 10).map((f, idx) => {
+      const origin = originCities[idx % originCities.length];
+      const threatType = types[idx % types.length];
+      const statuses: ('BLOCKED' | 'MITIGATING' | 'DETECTED' | 'TAKEDOWN_SENT')[] = [
+        'BLOCKED', 'MITIGATING', 'DETECTED', 'TAKEDOWN_SENT'
+      ];
+
+      return {
+        id: f.id,
+        name: f.title,
+        type: threatType,
+        severity: (f.riskSeverity as 'critical' | 'high' | 'medium') || 'critical',
+        originCity: origin.city,
+        originCountry: origin.country,
+        originLat: origin.lat,
+        originLng: origin.lng,
+        targetCity: targetHq.city,
+        targetCountry: targetHq.country,
+        targetLat: targetHq.lat,
+        targetLng: targetHq.lng,
+        targetAsset: f.candidateWebsite || f.candidateUrl || f.usernameOrPackage || targetHq.asset,
+        riskScore: f.riskScore || 85,
+        status: statuses[idx % statuses.length],
+        timestamp: `${String(12 - (idx % 4)).padStart(2, '0')}:${String((idx * 7) % 60).padStart(2, '0')}:${String((idx * 13) % 60).padStart(2, '0')} UTC`,
+      };
+    });
+  }, [findings, brandProfile]);
+
+  const handleInspectFinding = (threat: ThreatVector) => {
+    const match = findings.find(f => f.id === threat.id);
+    if (match) {
+      setSelectedFinding(match);
+    } else {
+      setActivePage('findings');
+    }
+  };
+
+  // Executive threat metrics
+  const criticalCount = useMemo(() => {
+    return findings.filter(f => f.riskSeverity?.toLowerCase() === 'critical' && f.status !== 'Resolved' && f.status !== 'Dismissed').length;
   }, [findings]);
 
+  const highRiskCount = useMemo(() => {
+    return findings.filter(f => f.riskSeverity?.toLowerCase() === 'high' && f.status !== 'Resolved' && f.status !== 'Dismissed').length;
+  }, [findings]);
+
+  const activeInvestigationsCount = useMemo(() => {
+    return findings.filter(f => f.status?.toLowerCase() === 'investigating').length;
+  }, [findings]);
+
+  const currentSourceStatus = useMemo(() => {
+    if (!isDemoMode && findings.some(f => !f.isDemo && resolveSourceStatus(undefined, f).type === 'LIVE DATA')) {
+      return 'LIVE DATA';
+    }
+    return 'DEMO DATA';
+  }, [isDemoMode, findings]);
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16 text-xs font-sans">
-      {/* 1. Cinematic Command Center Header */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0D1425] border border-[#24324D] relative overflow-hidden shadow-2xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-violet-600/15 via-cyan-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-80 h-80 bg-violet-600/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#8050FF]/40 to-transparent pointer-events-none" />
-        
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider bg-[#070A14] text-[#42DDF5] border border-[#42DDF5]/40 flex items-center gap-1.5 shadow-[0_0_10px_rgba(66,221,245,0.15)]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#42DDF5] animate-ping" />
-                [DEFCON 2] • AEGIS RADAR ACTIVE
+    <div className="space-y-4 max-w-[1560px] mx-auto pb-12 text-xs font-sans select-none">
+      {/* "What Needs Attention?" Executive Summary Banner */}
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-[#040C1D] border border-cyan-950/80 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#FF5878]/15 border border-[#FF5878]/30 flex items-center justify-center text-[#FF5878] shrink-0">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-bold text-white tracking-wide font-sans">
+                What Needs Attention?
+              </h2>
+              <span className="text-[10px] font-mono text-[#A6B3CD] uppercase tracking-wider">
+                Executive Threat Summary
               </span>
-              
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-300 px-2.5 py-0.5 rounded-md bg-emerald-950/40 border border-emerald-500/30">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                {brandProfile.brandName || company?.name || 'Company'} Perimeter Secured
-              </span>
-
-              {isDemoMode && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-amber-300 px-2.5 py-0.5 rounded-md bg-amber-950/40 border border-amber-500/30">
-                  <AlertTriangle className="w-3 h-3 text-amber-400" />
-                  SIMULATED THREAT LAB
-                </span>
-              )}
             </div>
-
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
-              <span>Security Operations Center</span>
-              <span className="text-sm font-mono font-normal text-[#A17AFF]">
-                // {brandProfile.brandName || company?.name}
-              </span>
-            </h1>
-
-            <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
-              Real-time cyber threat intelligence, executive impersonation surveillance, and rogue digital asset neutralization for modern enterprises.
+            <p className="text-[11px] text-slate-400">
+              Immediate threat signals requiring manual analyst review and verification.
             </p>
           </div>
+        </div>
 
-          {/* Quick Command Actions with Smooth UI buttons */}
-          <div className="flex items-center gap-3 self-start lg:self-center flex-wrap">
-            <button
-              onClick={() => setActivePage('check-link')}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#111B30] hover:bg-[#17223B] text-[#42DDF5] border border-[#24324D] hover:border-[#42DDF5]/50 transition-all flex items-center gap-2 shadow-md"
-            >
-              <Link2 className="w-4 h-4 text-[#42DDF5]" />
-              <span>Inspect Link</span>
-            </button>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto font-mono text-xs">
+          {/* Critical Threats */}
+          <button
+            onClick={() => navigateToFindings(undefined, 'critical')}
+            className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-[#00050B] border border-[#FF5878]/40 hover:bg-[#FF5878]/10 text-white flex items-center justify-between sm:justify-start gap-2 transition-all hover-lift-subtle focus-visible:ring-2 focus-visible:ring-[#FF5878]"
+            title="Filter by Critical Threats"
+          >
+            <span className="text-[10px] text-slate-400 font-sans">Critical</span>
+            <span className="text-xs font-black text-[#FF5878] bg-[#FF5878]/20 px-2 py-0.5 rounded">
+              {criticalCount}
+            </span>
+          </button>
 
-            <button
-              onClick={() => setActivePage('scan-results')}
-              className="px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-[#111B30] hover:bg-[#17223B] text-slate-200 border border-[#24324D] hover:border-[#8050FF]/50 transition-all flex items-center gap-1.5 shadow-sm"
-              title="Review Staged Scan Results & Visual Summary"
-            >
-              <Radar className="w-3.5 h-3.5 text-[#A17AFF]" />
-              <span>Scan Summary</span>
-            </button>
+          {/* High-Risk Threats */}
+          <button
+            onClick={() => navigateToFindings(undefined, 'high')}
+            className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-[#00050B] border border-[#F59E0B]/40 hover:bg-[#F59E0B]/10 text-white flex items-center justify-between sm:justify-start gap-2 transition-all hover-lift-subtle focus-visible:ring-2 focus-visible:ring-[#F59E0B]"
+            title="Filter by High-Risk Threats"
+          >
+            <span className="text-[10px] text-slate-400 font-sans">High-Risk</span>
+            <span className="text-xs font-black text-[#F59E0B] bg-[#F59E0B]/20 px-2 py-0.5 rounded">
+              {highRiskCount}
+            </span>
+          </button>
 
-            <button
-              onClick={() => runNewScan('all')}
-              disabled={isScanning}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white transition-all flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-violet-950/40"
-            >
-              <Zap className={`w-4 h-4 text-white ${isScanning ? 'animate-spin' : ''}`} />
-              <span>{isScanning ? 'Executing Radar Scan...' : 'Run Global Scan'}</span>
-            </button>
+          {/* Active Investigations */}
+          <button
+            onClick={() => navigateToFindings(undefined, 'investigating')}
+            className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-[#00050B] border border-[#00E5FF]/40 hover:bg-[#00E5FF]/10 text-white flex items-center justify-between sm:justify-start gap-2 transition-all hover-lift-subtle focus-visible:ring-2 focus-visible:ring-[#00E5FF]"
+            title="Filter by Active Investigations"
+          >
+            <span className="text-[10px] text-slate-400 font-sans">Investigations</span>
+            <span className="text-xs font-black text-[#00E5FF] bg-[#00E5FF]/20 px-2 py-0.5 rounded">
+              {activeInvestigationsCount}
+            </span>
+          </button>
+
+          {/* Source Status */}
+          <div className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-[#00050B] border border-cyan-900/60 flex items-center justify-between sm:justify-start gap-2">
+            <span className="text-[10px] text-slate-400 font-sans">Source</span>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+              currentSourceStatus === 'LIVE DATA' 
+                ? 'bg-[#00FFA3]/15 text-[#00FFA3] border-[#00FFA3]/30' 
+                : 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+            }`}>
+              {currentSourceStatus}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* 2. Compact Floating Telemetry HUD (Replaces generic card grid) */}
-      <section>
-        <CompactTelemetryHUD />
-      </section>
+      {/* View Mode Toggle Pill (Command Center vs Operations HUD) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-[#040C1D] border border-cyan-950 shadow-lg">
+          <button
+            onClick={() => setActiveHudMode('command')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
+              activeHudMode === 'command'
+                ? 'bg-[#00FFA3]/20 border border-[#00FFA3]/40 text-[#00FFA3] shadow-[0_0_15px_rgba(0, 255, 163,0.25)]'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${activeHudMode === 'command' ? 'bg-[#00FFA3]' : 'bg-slate-500'}`} />
+            <span>Command Center</span>
+          </button>
 
-      {/* 3. Main Visual Anchor: Interactive Global Threat Operations Map */}
-      <section>
-        <GlobalThreatMap />
-      </section>
+          <button
+            onClick={() => setActiveHudMode('operations')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
+              activeHudMode === 'operations'
+                ? 'bg-[#00FFA3]/20 border border-[#00FFA3]/40 text-[#00FFA3] shadow-[0_0_15px_rgba(0, 255, 163,0.25)]'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5" />
+            <span>Operations HUD</span>
+          </button>
 
-      {/* 4. Operations Command Grid: Live Feed (Left) & Threat Intelligence Radar (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column (2 Cols): Live Threat Activity Stream */}
-        <div className="lg:col-span-2 space-y-6">
-          <LiveThreatStream />
-
-          {/* Quick-Strike Security Investigation Panels */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            
-            {/* 1. Check Suspicious Link */}
-            <SpotlightCard
-              onClick={() => setActivePage('check-link')}
-              spotlightColor="rgba(6, 182, 212, 0.2)"
-              className="p-4 rounded-2xl unlumen-card border border-cyan-500/30 hover:border-cyan-400 transition-all cursor-pointer group flex flex-col justify-between"
-            >
-              <div>
-                <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-3 group-hover:scale-105 transition-transform shadow-sm">
-                  <Link2 className="w-4 h-4" />
-                </div>
-                <h4 className="text-xs font-bold text-white mb-1 group-hover:text-cyan-300 transition-colors">
-                  Check a Link
-                </h4>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Analyze spoofed domains, phishing links, and deceptive redirects.
-                </p>
-              </div>
-              <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-cyan-400">
-                <span>Analyze link</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </SpotlightCard>
-
-            {/* 2. Check Social Impersonators */}
-            <SpotlightCard
-              onClick={() => navigateToFindings('social')}
-              spotlightColor="rgba(59, 130, 246, 0.2)"
-              className="p-4 rounded-2xl unlumen-card border border-blue-500/25 hover:border-blue-400 transition-all cursor-pointer group flex flex-col justify-between"
-            >
-              <div>
-                <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 mb-3 group-hover:scale-105 transition-transform shadow-sm">
-                  <Share2 className="w-4 h-4" />
-                </div>
-                <h4 className="text-xs font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">
-                  Social Clones
-                </h4>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Discover unauthorized brand handles across Instagram, X, and Telegram.
-                </p>
-              </div>
-              <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-blue-400">
-                <span>View {counts.social} profiles</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </SpotlightCard>
-
-            {/* 3. Check Mobile App Clones */}
-            <SpotlightCard
-              onClick={() => navigateToFindings('app')}
-              spotlightColor="rgba(245, 158, 11, 0.2)"
-              className="p-4 rounded-2xl unlumen-card border border-amber-500/25 hover:border-amber-400 transition-all cursor-pointer group flex flex-col justify-between"
-            >
-              <div>
-                <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-3 group-hover:scale-105 transition-transform shadow-sm">
-                  <Smartphone className="w-4 h-4" />
-                </div>
-                <h4 className="text-xs font-bold text-white mb-1 group-hover:text-amber-300 transition-colors">
-                  Mobile Clones
-                </h4>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Flag malicious APK packages and unauthorized app store clones.
-                </p>
-              </div>
-              <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-amber-400">
-                <span>View {counts.app} apps</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </SpotlightCard>
-
-          </div>
-
-          {/* New Threat Intelligence Tools & Executive Reports Quick-Launch */}
-          <div className="p-5 rounded-2xl unlumen-card border border-slate-800/80 space-y-3 shadow-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5 font-mono">
-                <Terminal className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Threat Defense Tools & Executive Reports</span>
-              </span>
-              <span className="text-[10px] text-cyan-400 font-semibold font-mono uppercase tracking-wider">
-                [INSTANT LAUNCH]
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <button
-                onClick={() => setActivePage('watchlist')}
-                className="p-3 rounded-xl bg-slate-950/70 hover:bg-slate-900 border border-slate-800 hover:border-cyan-500/40 text-left transition-all group btn-smooth shadow-sm"
-              >
-                <div className="flex items-center gap-1.5 text-cyan-400 mb-1">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span className="text-xs font-bold text-white group-hover:text-cyan-300">Watchlist</span>
-                </div>
-                <p className="text-[10px] text-slate-400 leading-tight">Predictive namespace risks</p>
-              </button>
-
-              <button
-                onClick={() => setActivePage('scam-analyzer')}
-                className="p-3 rounded-xl bg-slate-950/70 hover:bg-slate-900 border border-slate-800 hover:border-red-500/40 text-left transition-all group btn-smooth shadow-sm"
-              >
-                <div className="flex items-center gap-1.5 text-red-400 mb-1">
-                  <FileSearch className="w-3.5 h-3.5" />
-                  <span className="text-xs font-bold text-white group-hover:text-red-300">Scam Script</span>
-                </div>
-                <p className="text-[10px] text-slate-400 leading-tight">13-heuristic vector analyzer</p>
-              </button>
-
-              <button
-                onClick={() => setActivePage('warning-kit')}
-                className="p-3 rounded-xl bg-slate-950/70 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 text-left transition-all group btn-smooth shadow-sm"
-              >
-                <div className="flex items-center gap-1.5 text-amber-400 mb-1">
-                  <Megaphone className="w-3.5 h-3.5" />
-                  <span className="text-xs font-bold text-white group-hover:text-amber-300">Warning Kit</span>
-                </div>
-                <p className="text-[10px] text-slate-400 leading-tight">Social, SMS & QR poster</p>
-              </button>
-
-              <button
-                onClick={() => setActivePage('board-report')}
-                className="p-3 rounded-xl bg-slate-950/70 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/40 text-left transition-all group btn-smooth shadow-sm"
-              >
-                <div className="flex items-center gap-1.5 text-indigo-400 mb-1">
-                  <FileText className="w-3.5 h-3.5" />
-                  <span className="text-xs font-bold text-white group-hover:text-indigo-300">Board Report</span>
-                </div>
-                <p className="text-[10px] text-slate-400 leading-tight">Print & PDF ready audit</p>
-              </button>
-            </div>
-          </div>
+          <button
+            onClick={() => setActiveHudMode('campaigns')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
+              activeHudMode === 'campaigns'
+                ? 'bg-[#00FFA3]/20 border border-[#00FFA3]/40 text-[#00FFA3] shadow-[0_0_15px_rgba(0, 255, 163,0.25)]'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Network className="w-3.5 h-3.5" />
+            <span>Campaign Clusters</span>
+          </button>
         </div>
 
-        {/* Right Column (1 Col): Risk Telemetry Visualizations */}
-        <div className="space-y-6">
-          {/* Severity Donut */}
-          <DonutChart
-            title="Severity Matrix"
-            total={severityDonutData.total}
-            segments={severityDonutData.segments}
-            textSummary="Active threat profile distributed by risk tier."
-          />
+        {/* Scan Actions & DEFCON indicator */}
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 text-[10px] font-mono text-slate-400 px-3 py-1 rounded-full bg-[#040C1D] border border-cyan-950">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00FFA3] animate-pulse" />
+            <span className="text-[#00FFA3] font-bold">DEFCON 2</span>
+            <span>ACTIVE PERIMETER DEFENSE</span>
+          </div>
 
-          {/* Comparison Bar */}
-          <ComparisonBarChart
-            socialCount={counts.social}
-            appCount={counts.app}
-          />
-
-          {/* Trend Line */}
-          <TrendLineChart />
+          <button
+            onClick={() => runNewScan('all')}
+            disabled={isScanning}
+            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#00E88F] to-[#00FFA3] text-[#00050B] font-bold text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(0, 255, 163,0.3)] hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
+          >
+            <Radar className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin' : ''}`} />
+            <span>{isScanning ? 'SCANNING MESH...' : 'TRIGGER DEFENSE SCAN'}</span>
+          </button>
         </div>
       </div>
 
-      {/* 5. Surveillance Source Status Panel */}
-      <section>
-        <SourceStatusPanel />
-      </section>
+      {/* ========================================================================= */}
+      {/* 1. PRIMARY VIEW: EXACT VIDEO 1 COMMAND CENTER BENTO GRID */}
+      {/* ========================================================================= */}
+      {activeHudMode === 'command' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+          
+          {/* --------------------------------------------------------------------- */}
+          {/* LEFT COLUMN: 4 Bento Metric Cards (Video 1 signature) */}
+          {/* --------------------------------------------------------------------- */}
+          <div className="lg:col-span-3 flex flex-col gap-3.5">
+            {/* Bento Card 1: Security Status */}
+            <div className="cyber-bento-card p-4 flex flex-col justify-between min-h-[92px]">
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="text-xs font-semibold font-sans tracking-wide">Security Status</span>
+                <ShieldCheck className="w-4 h-4 text-[#00FFA3]" />
+              </div>
+              <div className="py-1">
+                <DotMatrixDisplay text="PROTECTED" size="md" color="#00FFA3" />
+              </div>
+              <div className="text-[10px] font-mono text-slate-500 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00FFA3]" />
+                <span>Zero Breach Detected</span>
+              </div>
+            </div>
+
+            {/* Bento Card 2: Protected Devices / Assets */}
+            <div className="cyber-bento-card p-4 flex flex-col justify-between min-h-[110px]">
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="text-xs font-semibold font-sans tracking-wide">Protected Devices</span>
+                <Smartphone className="w-4 h-4 text-slate-400" />
+              </div>
+              <div className="text-xl font-bold font-mono text-white tracking-tight flex items-baseline gap-1 pt-0.5">
+                <span>8</span>
+                <span className="text-slate-500 text-sm">/ 8</span>
+              </div>
+              {/* Animated Vertical Equalizer Bars */}
+              <EqualizerBars count={8} activeCount={8} />
+            </div>
+
+            {/* Bento Card 3: Security Score */}
+            <div className="cyber-bento-card p-4 flex flex-col justify-between min-h-[105px]">
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="text-xs font-semibold font-sans tracking-wide">Security Score</span>
+                <Headphones className="w-4 h-4 text-slate-400 hover:text-[#00FFA3] cursor-pointer transition-colors" />
+              </div>
+              <div className="py-0.5">
+                <DotMatrixDisplay text="92/100" size="lg" color="#00FFA3" />
+              </div>
+              {/* Dotted fine progress line */}
+              <div className="w-full flex items-center gap-1 pt-1">
+                {Array.from({ length: 24 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1 flex-1 rounded-full ${
+                      i < 22 ? 'bg-[#00FFA3] shadow-[0_0_6px_#00FFA3]' : 'bg-cyan-950'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Bento Card 4: Active Threats */}
+            <div className="cyber-bento-card p-4 flex flex-col justify-between min-h-[100px]">
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="text-xs font-semibold font-sans tracking-wide">Active Threats</span>
+                <Crosshair className="w-4 h-4 text-[#00FFA3]" />
+              </div>
+              <div className="flex items-baseline justify-between">
+                <DotMatrixDisplay text="2" size="xl" color="#00FFA3" />
+                <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                  MITIGATING
+                </span>
+              </div>
+              {/* Dotted micro sparkline wave */}
+              <div className="w-full h-4 flex items-center pt-1">
+                <svg viewBox="0 0 100 12" className="w-full h-full overflow-visible">
+                  <path
+                    d="M 0,6 Q 25,1 50,8 T 100,5"
+                    fill="none"
+                    stroke="#00FFA3"
+                    strokeWidth="1.5"
+                    strokeDasharray="2 2"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* --------------------------------------------------------------------- */}
+          {/* CENTER COLUMN: Global Threat Activity 3D Globe + Bottom 3 Bento Cards */}
+          {/* --------------------------------------------------------------------- */}
+          <div className="lg:col-span-6 flex flex-col gap-4">
+            {/* Top Stage: 3D Global Threat Activity (Exact Video 1 setup) */}
+            <GlobalThreatActivityCenter
+              threats={threats}
+              onThreatSelect={handleInspectFinding}
+              className="flex-1"
+            />
+
+            {/* Bottom Row of 3 Bento Cards Underneath Globe */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* 1. Threat Trend */}
+              <ThreatTrendSparkline
+                onViewAll={() => setActivePage('findings')}
+                className="h-full"
+              />
+
+              {/* 2. Needs Attention */}
+              <NeedsAttentionBento
+                findings={findings}
+                onSelectFinding={setSelectedFinding}
+                onAction={(actionId) => {
+                  if (actionId === 'login-detected') {
+                    setActivePage('findings');
+                  } else {
+                    setActivePage('settings');
+                  }
+                }}
+                className="h-full"
+              />
+
+              {/* 3. Threat Evidence */}
+              <ThreatEvidenceFolder
+                count={findings.length || 24}
+                onExplore={() => setActivePage('board-report')}
+                className="h-full"
+              />
+            </div>
+          </div>
+
+          {/* --------------------------------------------------------------------- */}
+          {/* RIGHT COLUMN: Threat Distribution & Recent Security (Video 1 signature) */}
+          {/* --------------------------------------------------------------------- */}
+          <div className="lg:col-span-3 flex flex-col gap-4">
+            {/* Threat Distribution with Dual Frequency Curves */}
+            <ThreatDistributionVisualizer className="flex-1 min-h-[220px]" />
+
+            {/* Recent Security Activity Stream */}
+            <RecentSecurityFeed
+              onViewAll={() => setActivePage('findings')}
+              className="flex-1 min-h-[240px]"
+            />
+          </div>
+        </div>
+      ) : activeHudMode === 'operations' ? (
+        /* 2. SECONDARY VIEW: EXACT VIDEO 2 HIGH-TECH OPERATIONS HUD */
+        <OperationsHudView />
+      ) : (
+        /* 3. TERTIARY VIEW: CAMPAIGN INFRASTRUCTURE CORRELATION ENGINE */
+        <CampaignClusteringView findings={findings} onOpenFinding={setSelectedFinding} />
+      )}
     </div>
   );
 };

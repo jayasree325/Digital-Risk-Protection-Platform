@@ -47,10 +47,11 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ data }) => {
   }, '');
 
   return (
-    <div className="p-4 rounded-xl bg-[#0D1425] border border-[#24324D] hover:border-[#8050FF]/40 transition-colors flex flex-col justify-between">
+    <div className="p-4.5 rounded-2xl bg-[#0C142E]/70 backdrop-blur-2xl border border-white/[0.08] hover:border-[#00FFA3]/40 transition-all flex flex-col justify-between shadow-glass relative overflow-hidden group">
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#00FFA3]/30 to-transparent pointer-events-none" />
       <div className="flex items-center justify-between mb-2">
         <h4 className="text-xs font-bold text-white tracking-tight">Threat Ingestion Trends</h4>
-        <span className="text-[10px] text-cyan-400 font-medium">Last 7 Days</span>
+        <span className="text-[10px] text-[#00E5FF] font-medium font-mono">Last 7 Days</span>
       </div>
 
       <div className="relative my-1">
@@ -74,7 +75,7 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ data }) => {
                   cx={x}
                   cy={y}
                   r={isHovered ? 5 : 3.5}
-                  fill={isHovered ? '#38bdf8' : '#0891b2'}
+                  fill={isHovered ? '#00e5ff' : '#0891b2'}
                   stroke="#080d1a"
                   strokeWidth="2"
                   className="cursor-pointer transition-all"

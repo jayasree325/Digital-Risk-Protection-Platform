@@ -103,20 +103,20 @@ export const OnboardingWizardPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#040711] text-slate-100 flex flex-col font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-[#00050B] text-slate-100 flex flex-col font-sans relative overflow-hidden">
       {/* Decorative Haikei gradient mesh */}
-      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-cyan-500/10 via-blue-600/5 to-transparent rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-10 w-[500px] h-[500px] bg-gradient-to-tr from-purple-600/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-[#00FFA3]/10 via-[#00E5FF]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-10 w-[500px] h-[500px] bg-gradient-to-tr from-[#00E5FF]/10 to-transparent rounded-full blur-3xl pointer-events-none" />
 
       {/* Top Header */}
-      <header className="h-16 px-6 lg:px-12 bg-[#060A17]/80 backdrop-blur-xl border-b border-cyan-500/15 flex items-center justify-between sticky top-0 z-20 shadow-md">
+      <header className="h-16 px-6 lg:px-12 bg-[#00050B]/90 backdrop-blur-xl border-b border-[#00FFA3]/20 flex items-center justify-between sticky top-0 z-20 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 shadow-sm">
-            <ShieldCheck className="w-5 h-5 text-cyan-400" />
+          <div className="p-2 rounded-xl bg-[#00FFA3]/15 border border-[#00FFA3]/30 text-[#00FFA3] shadow-[0_0_15px_rgba(0, 255, 163,0.2)]">
+            <ShieldCheck className="w-5 h-5 text-[#00FFA3]" />
           </div>
           <div>
-            <span className="font-black text-white text-sm tracking-wider">AEGIS</span>
-            <span className="text-xs font-mono text-[#42DDF5] ml-2">[SETUP_WIZARD]</span>
+            <span className="font-black text-white text-sm tracking-wider">BrandGuard</span>
+            <span className="text-xs font-mono text-[#00FFA3] ml-2">[SETUP_WIZARD]</span>
           </div>
         </div>
 
@@ -131,8 +131,9 @@ export const OnboardingWizardPage: React.FC = () => {
       {/* Main Form Container */}
       <main className="flex-1 flex items-center justify-center p-6 relative z-10">
         <SpotlightCard
+          enable3DTilt={false}
           spotlightColor="rgba(6, 182, 212, 0.15)"
-          className="w-full max-w-2xl unlumen-card border border-cyan-500/25 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-6"
+          className="w-full max-w-2xl unlumen-card border border-cyan-500/25 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-6 min-h-[580px]"
         >
           {/* Progress Header */}
           <div className="space-y-2">
@@ -569,9 +570,9 @@ export const OnboardingWizardPage: React.FC = () => {
                 </div>
 
                 {/* Publisher */}
-                <div className="p-3.5 rounded-xl bg-navy-950 border border-slate-800 flex items-center justify-between sm:col-span-2">
+                <div className="p-3.5 rounded-xl bg-[#00050B] border border-slate-800 flex items-center justify-between sm:col-span-2">
                   <div className="flex items-center gap-2.5">
-                    <Building2 className="w-4 h-4 text-purple-400" />
+                    <Building2 className="w-4 h-4 text-[#00FFA3]" />
                     <div>
                       <span className="font-semibold text-white block">Official publisher</span>
                       <span className="text-[11px] text-slate-400">{publisher}</span>

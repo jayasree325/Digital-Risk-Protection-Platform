@@ -7,7 +7,7 @@ interface SummaryCardProps {
   icon: LucideIcon;
   trendText: string;
   trendType?: 'neutral' | 'danger' | 'info' | 'warning';
-  accentColor?: 'cyan' | 'red' | 'blue' | 'purple';
+  accentColor?: 'cyan' | 'red' | 'blue' | 'purple' | 'green';
   onClick?: () => void;
   isActive?: boolean;
 }
@@ -39,9 +39,14 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
       glow: 'group-hover:shadow-[0_0_20px_-5px_rgba(59,130,246,0.25)]',
     },
     purple: {
-      border: 'hover:border-purple-500/40',
-      iconBg: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-      glow: 'group-hover:shadow-[0_0_20px_-5px_rgba(168,85,247,0.25)]',
+      border: 'hover:border-[#00FFA3]/40',
+      iconBg: 'bg-[#00FFA3]/10 text-[#00FFA3] border-[#00FFA3]/20',
+      glow: 'group-hover:shadow-[0_0_20px_-5px_rgba(0, 255, 163,0.3)]',
+    },
+    green: {
+      border: 'hover:border-[#00FFA3]/40',
+      iconBg: 'bg-[#00FFA3]/10 text-[#00FFA3] border-[#00FFA3]/20',
+      glow: 'group-hover:shadow-[0_0_20px_-5px_rgba(0, 255, 163,0.3)]',
     },
   }[accentColor];
 
@@ -49,16 +54,16 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
     neutral: 'bg-slate-800 text-slate-300 border-slate-700',
     danger: 'bg-red-500/10 text-red-400 border-red-500/20 font-medium',
     warning: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    info: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+    info: 'bg-[#00FFA3]/10 text-[#00FFA3] border-[#00FFA3]/20',
   }[trendType];
 
   return (
     <button
       onClick={onClick}
       type="button"
-      className={`group w-full text-left p-5 rounded-xl bg-navy-850/90 border transition-all duration-200 relative overflow-hidden ${
+      className={`group w-full text-left p-5 rounded-xl bg-[#020713]/90 border transition-all duration-250 relative overflow-hidden hover-lift-subtle focus-visible:ring-2 focus-visible:ring-[#00FFA3] focus:outline-none ${
         isActive 
-          ? 'border-cyan-500/60 shadow-lg ring-1 ring-cyan-500/30' 
+          ? 'border-[#00FFA3]/60 shadow-[0_0_20px_rgba(0, 255, 163,0.2)] ring-1 ring-[#00FFA3]/40' 
           : `border-slate-800/80 ${accentStyles.border} ${accentStyles.glow}`
       } ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
     >
@@ -80,8 +85,9 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
         <span className={`inline-flex items-center text-[11px] px-2 py-0.5 rounded-md border ${trendStyles}`}>
           {trendText}
         </span>
-        <span className="text-[11px] text-slate-500 group-hover:text-slate-400 transition-colors">
-          View list &rarr;
+        <span className="text-[11px] text-slate-500 group-hover:text-slate-300 transition-colors flex items-center gap-1 font-mono">
+          <span>View list</span>
+          <span className="group-hover:translate-x-1 transition-transform duration-200">&rarr;</span>
         </span>
       </div>
     </button>
